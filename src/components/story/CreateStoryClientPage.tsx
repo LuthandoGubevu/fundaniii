@@ -92,7 +92,7 @@ export default function CreateStoryClientPage() {
 
   return (
     <div className="space-y-8">
-      <Card className="shadow-lg">
+      <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Create Your Story</CardTitle>
           <CardDescription>Let your imagination flow! Write your story below and use our AI tools to help.</CardDescription>
@@ -109,7 +109,7 @@ export default function CreateStoryClientPage() {
                     <FormControl>
                       <Textarea
                         placeholder="Once upon a time..."
-                        className="min-h-[200px] text-base resize-none"
+                        className="min-h-[200px] text-base resize-none bg-background/70"
                         {...field}
                       />
                     </FormControl>
@@ -126,7 +126,7 @@ export default function CreateStoryClientPage() {
                       <FormLabel>Optional: Select a Theme</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="bg-background/70">
                             <SelectValue placeholder="Choose a theme..." />
                           </SelectTrigger>
                         </FormControl>
@@ -151,7 +151,7 @@ export default function CreateStoryClientPage() {
       </Card>
 
       {aiSuggestions && (
-        <Card className="shadow-md">
+        <Card className="shadow-md bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
           <CardHeader>
             <CardTitle>AI Story Guide Suggestions</CardTitle>
           </CardHeader>
@@ -172,7 +172,7 @@ export default function CreateStoryClientPage() {
         </Card>
       )}
 
-      <Card className="shadow-lg">
+      <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
         <CardHeader>
           <CardTitle>Translate Your Story</CardTitle>
           <CardDescription>Share your story in different languages.</CardDescription>
@@ -189,7 +189,7 @@ export default function CreateStoryClientPage() {
                       <FormLabel>Translate to</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="bg-background/70">
                             <SelectValue placeholder="Select language..." />
                           </SelectTrigger>
                         </FormControl>
@@ -220,7 +220,7 @@ export default function CreateStoryClientPage() {
       </Card>
       
       <div className="text-center mt-8">
-        <Button onClick={handleIllustrate} variant="outline" size="lg">
+        <Button onClick={handleIllustrate} variant="outline" size="lg" className="bg-background/50">
           <ImageIcon className="mr-2 h-5 w-5" />
           Illustrate My Story (Coming Soon)
         </Button>

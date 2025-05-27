@@ -50,7 +50,7 @@ export default function StoryLibraryClientPage() {
 
   return (
     <div className="space-y-8">
-      <Card className="shadow-lg">
+      <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Story Library</CardTitle>
           <CardDescription>Explore stories created by other learners. Filter by grade, subject, or language.</CardDescription>
@@ -63,25 +63,25 @@ export default function StoryLibraryClientPage() {
                 placeholder="Search stories..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 bg-background/70"
               />
             </div>
             <Select value={gradeFilter} onValueChange={setGradeFilter}>
-              <SelectTrigger><SelectValue placeholder="Filter by Grade" /></SelectTrigger>
+              <SelectTrigger className="bg-background/70"><SelectValue placeholder="Filter by Grade" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Grades</SelectItem>
                 {storyGrades.map(grade => <SelectItem key={grade} value={grade}>{grade}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-              <SelectTrigger><SelectValue placeholder="Filter by Subject" /></SelectTrigger>
+              <SelectTrigger className="bg-background/70"><SelectValue placeholder="Filter by Subject" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Subjects</SelectItem>
                 {storySubjects.map(subject => <SelectItem key={subject} value={subject}>{subject}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={languageFilter} onValueChange={setLanguageFilter}>
-              <SelectTrigger><SelectValue placeholder="Filter by Language" /></SelectTrigger>
+              <SelectTrigger className="bg-background/70"><SelectValue placeholder="Filter by Language" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All Languages</SelectItem>
                 {storyLanguages.map(lang => <SelectItem key={lang} value={lang}>{lang}</SelectItem>)}
@@ -89,7 +89,7 @@ export default function StoryLibraryClientPage() {
             </Select>
           </div>
            {(gradeFilter || subjectFilter || languageFilter || searchTerm) && (
-            <Button onClick={resetFilters} variant="outline" className="w-full md:w-auto">
+            <Button onClick={resetFilters} variant="outline" className="w-full md:w-auto bg-background/50">
               <FilterX className="mr-2 h-4 w-4" /> Reset Filters
             </Button>
           )}
@@ -103,7 +103,7 @@ export default function StoryLibraryClientPage() {
           ))}
         </div>
       ) : (
-        <Card className="text-center py-12 shadow-md">
+        <Card className="text-center py-12 shadow-md bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
           <CardContent>
             <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <CardTitle className="text-xl">No Stories Found</CardTitle>

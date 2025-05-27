@@ -44,7 +44,12 @@ export default function RootLayout({
 
         <SidebarProvider defaultOpen={true}>
           <div className="relative flex min-h-screen"> {/* Main flex container for sidebar and content */}
-            <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r"> {/* Sidebar definition */}
+            <Sidebar 
+              collapsible="icon" 
+              variant="sidebar" 
+              side="left" 
+              className="border-r bg-sidebar/80 backdrop-blur-sm supports-[backdrop-filter]:bg-sidebar/80"
+            > {/* Sidebar definition */}
               <AppSidebar /> {/* Sidebar content from the new component */}
             </Sidebar>
             <SidebarInset className="flex flex-col flex-1 overflow-y-auto"> {/* Manages content area beside sidebar */}

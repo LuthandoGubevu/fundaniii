@@ -18,7 +18,7 @@ export default function StoryCard({ story }: StoryCardProps) {
   const createdAt = new Date(story.createdAt);
 
   return (
-    <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
+    <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300 bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
       <CardHeader>
         {story.imageUrl && (
            <Image 

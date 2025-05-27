@@ -77,13 +77,13 @@ export default function AskQuestionClientPage() {
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-xl">
+    <Card className="w-full max-w-2xl mx-auto shadow-xl bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
       <CardHeader>
         <CardTitle className="text-3xl font-bold">Ask for Help!</CardTitle>
         <CardDescription>Have a question about school topics? Type it below and our AI friend will help!</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <ScrollArea className="h-[400px] w-full rounded-md border p-4" ref={scrollAreaRef}>
+        <ScrollArea className="h-[400px] w-full rounded-md border p-4 bg-background/50" ref={scrollAreaRef}>
           {chatMessages.length === 0 && (
             <p className="text-muted-foreground text-center">Ask a question to start the conversation!</p>
           )}
@@ -105,7 +105,7 @@ export default function AskQuestionClientPage() {
                   "max-w-[75%] p-3 rounded-xl shadow",
                   msg.sender === "user"
                     ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
+                    : "bg-muted text-muted-foreground" 
                 )}
               >
                 <p className="text-sm whitespace-pre-wrap">{msg.text}</p>

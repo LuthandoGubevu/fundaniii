@@ -38,13 +38,13 @@ export default async function SingleStoryPage({ params }: { params: { id: string
 
   return (
     <div className="max-w-3xl mx-auto">
-      <Button asChild variant="outline" size="sm" className="mb-6">
+      <Button asChild variant="outline" size="sm" className="mb-6 bg-background/50">
         <Link href="/story-library">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Library
         </Link>
       </Button>
-      <Card className="shadow-xl">
+      <Card className="shadow-xl bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
         <CardHeader>
           {story.imageUrl && (
             <Image 
