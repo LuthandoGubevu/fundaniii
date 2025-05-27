@@ -6,7 +6,7 @@ import { PlayCircle, HelpCircle, Library, BookHeart, Zap, MessageSquareText, Boo
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] py-8 px-4">
+    <div className="flex w-full flex-1 flex-col items-center justify-center">
       {/* Title and Description */}
       <div className="mb-12 text-center">
         <BookHeart className="w-20 h-20 text-primary mb-6 mx-auto" />

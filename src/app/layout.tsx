@@ -60,7 +60,7 @@ export default function RootLayout({
                  </Link>
                  <SidebarTrigger /> {/* Mobile trigger */}
               </header>
-              <main className="flex-1 container max-w-screen-lg mx-auto py-8 px-4">
+              <main className="flex flex-1 flex-col items-center container max-w-screen-lg mx-auto py-8 px-4">
                 {children}
               </main>
               {/* Footer has been removed */}
