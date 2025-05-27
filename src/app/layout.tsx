@@ -43,9 +43,9 @@ export default function RootLayout({
             <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r"> {/* Sidebar definition */}
               <AppSidebar /> {/* Sidebar content from the new component */}
             </Sidebar>
-            <SidebarInset className="flex flex-col flex-1 bg-background overflow-y-auto"> {/* Manages content area beside sidebar */}
+            <SidebarInset className="flex flex-col flex-1 overflow-y-auto"> {/* Manages content area beside sidebar, removed bg-background */}
               {/* Mobile Header with Sidebar Trigger */}
-              <header className="sticky top-0 z-40 md:hidden flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4 h-16">
+              <header className="sticky top-0 z-40 md:hidden flex items-center justify-between border-b bg-background/30 backdrop-blur supports-[backdrop-filter]:bg-background/20 p-4 h-16">
                  <Link href="/" className="flex items-center space-x-2">
                     <BookHeart className="h-7 w-7 text-primary" />
                     <span className="font-semibold text-lg text-primary">Fundanii Ai</span>
