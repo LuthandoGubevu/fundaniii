@@ -1,11 +1,14 @@
 
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
 import "./globals.css";
-import { Navbar } from "@/components/layout/Navbar";
+import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "@/components/ui/toaster";
+import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import Link from "next/link";
+import { BookHeart } from "lucide-react";
+
 
 export const metadata: Metadata = {
   title: "Fundanii Ai",
@@ -20,15 +23,29 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${GeistSans.variable} ${GeistMono.variable} antialiased font-sans`}
+        className={`${GeistSans.variable} antialiased font-sans`}
       >
-        <div className="relative flex min-h-screen flex-col bg-background">
-          <Navbar />
-          <main className="flex-1 container max-w-screen-lg mx-auto py-8 px-4">
-            {children}
-          </main>
-          <Footer />
-        </div>
+        <SidebarProvider defaultOpen={true}>
+          <div className="relative flex min-h-screen"> {/* Main flex container for sidebar and content */}
+            <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r"> {/* Sidebar definition */}
+              <AppSidebar /> {/* Sidebar content from the new component */}
+            </Sidebar>
+            <SidebarInset className="flex flex-col flex-1 bg-background overflow-y-auto"> {/* Manages content area beside sidebar */}
+              {/* Mobile Header with Sidebar Trigger */}
+              <header className="sticky top-0 z-40 md:hidden flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4 h-16">
+                 <Link href="/" className="flex items-center space-x-2">
+                    <BookHeart className="h-7 w-7 text-primary" />
+                    <span className="font-semibold text-lg text-primary">Fundanii Ai</span>
+                 </Link>
+                 <SidebarTrigger /> {/* Mobile trigger */}
+              </header>
+              <main className="flex-1 container max-w-screen-lg mx-auto py-8 px-4">
+                {children}
+              </main>
+              <Footer />
+            </SidebarInset>
+          </div>
+        </SidebarProvider>
         <Toaster />
       </body>
     </html>
