@@ -5,8 +5,7 @@
 
 body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  /* Body background is now the off-white color */
-  background-color: hsl(var(--background));
+  /* Body background is now transparent to show animated background */
   position: relative;
   overflow-x: hidden; /* Prevent horizontal scroll from animated elements */
   color: hsl(var(--foreground)); /* Ensure foreground text color is applied */
@@ -14,13 +13,13 @@ body {
 }
 
 html {
-  background-color: hsl(var(--background)); /* Ensure html matches body off-white base */
+  /* HTML background is transparent to show animated background */
 }
 
 
 @layer base {
   :root {
-    --background: 0 0% 98%; /* Off-white */
+    --background: 0 0% 98%; /* Off-white - used by semi-transparent elements */
     --foreground: 200 25% 20%; /* Darker Blue for text */
 
     --card: 200 60% 95%; /* Slightly Lighter Blue/Off-white */
@@ -73,7 +72,6 @@ html {
     @apply border-border;
   }
   body {
-    /* background-color: hsl(var(--background)) is now set in the more specific body rule above */
     @apply text-foreground;
   }
 }
