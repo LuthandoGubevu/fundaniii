@@ -25,8 +25,12 @@ export default function RootLayout({
       <body
         className={`${GeistSans.variable} antialiased font-sans`}
       >
-        {/* Animated Background Elements */}
-        <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
+        {/* Animated Background Elements Container */}
+        {/* This container now has the sky gradient background */}
+        <div 
+          className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none"
+          style={{ background: 'linear-gradient(to bottom, #87CEEB 0%, #a1dff7 100%)' }}
+        >
           <div className="sun"></div>
           <div className="cloud one"></div>
           <div className="cloud two"></div>
@@ -43,7 +47,7 @@ export default function RootLayout({
             <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r"> {/* Sidebar definition */}
               <AppSidebar /> {/* Sidebar content from the new component */}
             </Sidebar>
-            <SidebarInset className="flex flex-col flex-1 overflow-y-auto"> {/* Manages content area beside sidebar, removed bg-background */}
+            <SidebarInset className="flex flex-col flex-1 overflow-y-auto"> {/* Manages content area beside sidebar */}
               {/* Mobile Header with Sidebar Trigger */}
               <header className="sticky top-0 z-40 md:hidden flex items-center justify-between border-b bg-background/30 backdrop-blur supports-[backdrop-filter]:bg-background/20 p-4 h-16">
                  <Link href="/" className="flex items-center space-x-2">

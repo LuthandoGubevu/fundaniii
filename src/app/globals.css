@@ -5,16 +5,22 @@
 
 body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  /* Updated body background for the sky */
-  background: linear-gradient(to bottom, #87CEEB 0%, #a1dff7 100%); /* Sky blue gradient */
+  /* Body background is now the off-white color */
+  background-color: hsl(var(--background));
   position: relative;
   overflow-x: hidden; /* Prevent horizontal scroll from animated elements */
   color: hsl(var(--foreground)); /* Ensure foreground text color is applied */
+  min-height: 100vh; /* Ensure body takes full viewport height */
 }
+
+html {
+  background-color: hsl(var(--background)); /* Ensure html matches body off-white base */
+}
+
 
 @layer base {
   :root {
-    --background: 0 0% 98%; /* Off-white (was Light Desaturated Blue) */
+    --background: 0 0% 98%; /* Off-white */
     --foreground: 200 25% 20%; /* Darker Blue for text */
 
     --card: 200 60% 95%; /* Slightly Lighter Blue/Off-white */
@@ -67,7 +73,7 @@ body {
     @apply border-border;
   }
   body {
-    /* bg-background is now handled by the more specific body rule above */
+    /* background-color: hsl(var(--background)) is now set in the more specific body rule above */
     @apply text-foreground;
   }
 }
