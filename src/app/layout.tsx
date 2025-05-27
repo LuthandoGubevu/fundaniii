@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "@/components/ui/toaster";
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import Link from "next/link";
@@ -27,7 +26,7 @@ export default function RootLayout({
       >
         {/* Animated Background Elements Container */}
         {/* This container now has the sky gradient background */}
-        <div 
+        <div
           className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none"
           style={{ background: 'linear-gradient(to bottom, #87CEEB 0%, #a1dff7 100%)' }}
         >
@@ -44,10 +43,10 @@ export default function RootLayout({
 
         <SidebarProvider defaultOpen={true}>
           <div className="relative flex min-h-screen"> {/* Main flex container for sidebar and content */}
-            <Sidebar 
-              collapsible="icon" 
-              variant="sidebar" 
-              side="left" 
+            <Sidebar
+              collapsible="icon"
+              variant="sidebar"
+              side="left"
               className="border-r bg-sidebar/80 backdrop-blur-sm supports-[backdrop-filter]:bg-sidebar/80"
             > {/* Sidebar definition */}
               <AppSidebar /> {/* Sidebar content from the new component */}
@@ -64,7 +63,7 @@ export default function RootLayout({
               <main className="flex-1 container max-w-screen-lg mx-auto py-8 px-4">
                 {children}
               </main>
-              <Footer />
+              {/* Footer has been removed */}
             </SidebarInset>
           </div>
         </SidebarProvider>
