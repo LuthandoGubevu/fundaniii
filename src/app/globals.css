@@ -5,6 +5,11 @@
 
 body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  /* Updated body background for the sky */
+  background: linear-gradient(to bottom, #87CEEB 0%, #a1dff7 100%); /* Sky blue gradient */
+  position: relative;
+  overflow-x: hidden; /* Prevent horizontal scroll from animated elements */
+  color: hsl(var(--foreground)); /* Ensure foreground text color is applied */
 }
 
 @layer base {
@@ -58,15 +63,133 @@ body {
     --sidebar-accent-foreground: 200 100% 98%; /* Text on sidebar accent - very light */
   }
 
-  /* Remove default dark theme if not explicitly requested or needed for this specific app */
-  /* .dark { ... } */
-}
-
-@layer base {
   * {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    /* bg-background is now handled by the more specific body rule above */
+    @apply text-foreground;
   }
+}
+
+/* Animated Background Styles */
+.sun {
+  position: absolute;
+  top: 8%;
+  left: 10%;
+  width: 80px;
+  height: 80px;
+  background-color: #FFD700; /* Gold */
+  border-radius: 50%;
+  box-shadow: 0 0 15px #FFD700, 0 0 25px #FFA500;
+  animation: pulseSun 6s infinite ease-in-out;
+  will-change: transform, box-shadow;
+}
+
+@keyframes pulseSun {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 15px #FFD700, 0 0 25px #FFA500;
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 25px #FFD700, 0 0 35px #FFA500;
+  }
+}
+
+.cloud {
+  position: absolute;
+  background-color: #FFFFFF;
+  border-radius: 30px; 
+  opacity: 0.85;
+  animation: driftCloud 20s linear infinite;
+  will-change: transform;
+}
+
+.cloud.one {
+  width: 100px; height: 35px;
+  top: 12%; left: -120px; /* Start off-screen */
+  animation-duration: 45s;
+}
+.cloud.two {
+  width: 130px; height: 45px;
+  top: 22%; left: -150px; /* Start off-screen */
+  animation-duration: 60s;
+  animation-delay: 7s;
+}
+.cloud.three {
+  width: 90px; height: 30px;
+  top: 18%; left: -100px; /* Start off-screen */
+  animation-duration: 50s;
+  animation-delay: 15s;
+}
+
+.cloud::before, .cloud::after {
+  content: '';
+  position: absolute;
+  background-color: inherit;
+  border-radius: 50%;
+  opacity: inherit;
+}
+
+.cloud.one::before { width: 50px; height: 50px; top: -20px; left: 15px; }
+.cloud.one::after  { width: 40px; height: 40px; top: -15px; right: 20px; }
+
+.cloud.two::before { width: 70px; height: 70px; top: -30px; left: 20px; }
+.cloud.two::after  { width: 50px; height: 50px; top: -25px; right: 25px; }
+
+.cloud.three::before { width: 45px; height: 45px; top: -20px; left: 10px; }
+.cloud.three::after  { width: 35px; height: 35px; top: -15px; right: 15px; }
+
+@keyframes driftCloud {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(100vw + 200px)); /* Ensure it moves completely off-screen */
+  }
+}
+
+.landscape {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 20vh; 
+  overflow: hidden; /* Keep hills contained */
+}
+
+.hill {
+  position: absolute;
+  bottom: -1px; /* Ensure it covers the bottom edge completely */
+  border-radius: 50% 50% 0 0 / 80px 80px 0 0; /* Rounded top for hill shape */
+}
+
+.hill.one { /* Furthest back hill */
+  width: 110%; 
+  height: 15vh;
+  left: -5%;
+  background-color: #8AE08A; /* Lighter green for distance */
+  z-index: 0; 
+  border-radius: 40% 60% 0 0 / 70px 90px 0 0;
+}
+
+.hill.two { /* Middle hill */
+  width: 120%; 
+  height: 20vh;
+  left: -10%; 
+  bottom: -2vh; /* Slightly lower to overlap and create depth */
+  background-color: #6BCB77; /* Medium green */
+  z-index: 1;
+  border-radius: 50% 50% 0 0 / 120px 100px 0 0;
+}
+
+.hill.three { /* Closest hill */
+  width: 100%;
+  height: 12vh;
+  left: 0%;
+  background-color: #4DAA57; /* Darker green for foreground */
+  z-index: 2;
+  bottom: 0;
+  border-radius: 60% 40% 0 0 / 100px 80px 0 0;
 }

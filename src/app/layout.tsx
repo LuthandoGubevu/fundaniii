@@ -25,6 +25,19 @@ export default function RootLayout({
       <body
         className={`${GeistSans.variable} antialiased font-sans`}
       >
+        {/* Animated Background Elements */}
+        <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
+          <div className="sun"></div>
+          <div className="cloud one"></div>
+          <div className="cloud two"></div>
+          <div className="cloud three"></div>
+          <div className="landscape">
+            <div className="hill one"></div>
+            <div className="hill two"></div>
+            <div className="hill three"></div>
+          </div>
+        </div>
+
         <SidebarProvider defaultOpen={true}>
           <div className="relative flex min-h-screen"> {/* Main flex container for sidebar and content */}
             <Sidebar collapsible="icon" variant="sidebar" side="left" className="border-r"> {/* Sidebar definition */}
