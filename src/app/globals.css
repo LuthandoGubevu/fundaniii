@@ -19,13 +19,14 @@ html {
 
 @layer base {
   :root {
-    --background: 0 0% 98%; /* Off-white - used by semi-transparent elements */
+    --background: 0 0% 98%; /* Off-white - used by semi-transparent elements like header/footer */
     --foreground: 200 25% 20%; /* Darker Blue for text */
 
-    --card: 200 60% 95%; /* Slightly Lighter Blue/Off-white */
+    /* Changed card, popover, and sidebar-background to be neutral light gray/off-white */
+    --card: 0 0% 97%; /* Neutral very light gray/off-white */
     --card-foreground: 200 25% 20%;
 
-    --popover: 200 60% 95%;
+    --popover: 0 0% 97%; /* Neutral very light gray/off-white */
     --popover-foreground: 200 25% 20%;
 
     --primary: 199 76% 52%; /* Vibrant Blue */
@@ -56,16 +57,16 @@ html {
     --chart-5: 27 87% 67%;
 
     /* Sidebar specific variables */
-    --sidebar-background: 200 60% 96%; /* Slightly distinct from card, very light blue/off-white */
-    --sidebar-foreground: 200 25% 25%; /* Slightly darker than main foreground for contrast if needed */
-    --sidebar-border: 200 40% 88%; /* Slightly lighter border for sidebar internal elements */
-    --sidebar-ring: var(--ring); /* Can reuse main ring or define a specific one */
+    --sidebar-background: 0 0% 97%; /* Neutral very light gray/off-white for sidebar */
+    --sidebar-foreground: 200 25% 25%; 
+    --sidebar-border: 200 40% 88%; 
+    --sidebar-ring: var(--ring); 
     
-    --sidebar-primary: var(--primary); /* Reuse main primary for consistency */
+    --sidebar-primary: var(--primary); 
     --sidebar-primary-foreground: var(--primary-foreground);
 
-    --sidebar-accent: 199 70% 70%; /* Accent for sidebar items - slightly softer primary */
-    --sidebar-accent-foreground: 200 100% 98%; /* Text on sidebar accent - very light */
+    --sidebar-accent: 199 70% 70%; 
+    --sidebar-accent-foreground: 200 100% 98%; 
   }
 
   * {
