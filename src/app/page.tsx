@@ -20,7 +20,7 @@ export default function HomePage() {
 
       {/* Action Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
-        <Card className="shadow-xl flex flex-col">
+        <Card className="shadow-xl flex flex-col bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
           <CardHeader className="items-center text-center">
             <Zap className="w-10 h-10 text-primary mb-3" />
             <CardTitle className="text-2xl font-semibold">Start a Story</CardTitle>
@@ -38,7 +38,7 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-xl flex flex-col">
+        <Card className="shadow-xl flex flex-col bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
           <CardHeader className="items-center text-center">
             <MessageSquareText className="w-10 h-10 text-primary mb-3" />
             <CardTitle className="text-2xl font-semibold">Ask for Help</CardTitle>
@@ -56,7 +56,7 @@ export default function HomePage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-xl flex flex-col">
+        <Card className="shadow-xl flex flex-col bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
           <CardHeader className="items-center text-center">
             <BookOpen className="w-10 h-10 text-primary mb-3" />
             <CardTitle className="text-2xl font-semibold">View Library</CardTitle>
