@@ -12,7 +12,7 @@ export default function HomePage() {
         <CardHeader className="items-center">
           <BookHeart className="w-16 h-16 text-primary mb-4" />
           <CardTitle className="text-4xl font-bold tracking-tight">
-            Welcome to Fundanii Tales!
+            Welcome to Fundanii Ai!
           </CardTitle>
           <CardDescription className="text-lg text-muted-foreground pt-2">
             Create, Learn, and Share Your Story.

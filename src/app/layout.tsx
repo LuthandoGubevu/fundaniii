@@ -8,7 +8,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "Fundanii Tales",
+  title: "Fundanii Ai",
   description: "AI-Powered Digital Storytelling & Learning Platform for African Learners",
 };
 

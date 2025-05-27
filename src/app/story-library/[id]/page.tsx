@@ -87,7 +87,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
     };
   }
   return {
-    title: `${story.title} | Fundanii Tales`,
+    title: `${story.title} | Fundanii Ai`,
     description: story.content.substring(0, 160),
   };
 }

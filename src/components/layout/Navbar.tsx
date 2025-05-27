@@ -22,7 +22,7 @@ export function Navbar() {
       <div className="container flex h-16 max-w-screen-2xl items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <BookHeart className="h-8 w-8 text-primary" />
-          <span className="font-bold text-xl text-primary">Fundanii Tales</span>
+          <span className="font-bold text-xl text-primary">Fundanii Ai</span>
         </Link>
         <nav className="flex flex-1 items-center space-x-2">
           {navItems.map((item) => (
