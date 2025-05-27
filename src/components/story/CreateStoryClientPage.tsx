@@ -91,7 +91,7 @@ export default function CreateStoryClientPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 w-full max-w-3xl">
       <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Create Your Story</CardTitle>
