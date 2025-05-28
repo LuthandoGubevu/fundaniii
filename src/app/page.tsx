@@ -17,9 +17,9 @@ export default function HomePage() {
           height={600}
           className="mb-6 mx-auto"
         />
-        <h1 className="text-5xl font-bold tracking-tight text-foreground max-w-[500px] mx-auto">
+        <h4 className="text-5xl font-bold tracking-tight text-foreground max-w-[500px] mx-auto">
           Empowering young minds to learn, imagine, and grow through AI-powered storytelling and exploration.
-        </h1>
+        </h4>
         <p className="text-xl text-muted-foreground mt-3 max-w-xl mx-auto">
           Create, Learn, and Share Your Story.
         </p>
