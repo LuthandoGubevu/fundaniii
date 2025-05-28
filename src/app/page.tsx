@@ -21,7 +21,7 @@ export default function HomePage() {
       {/* Action Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
         <Card
-          style={{ backgroundColor: '#912B8D' }}
+          style={{ backgroundColor: '#6EA719' }}
           className="shadow-xl flex flex-col text-white bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80"
         >
           <CardHeader className="items-center text-center">
