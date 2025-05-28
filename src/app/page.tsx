@@ -17,7 +17,7 @@ export default function HomePage() {
           height={600}
           className="mb-6 mx-auto"
         />
-        <h1 className="text-5xl font-bold tracking-tight text-foreground">
+        <h1 className="text-5xl font-bold tracking-tight text-foreground max-w-[500px] mx-auto">
           Empowering young minds to learn, imagine, and grow through AI-powered storytelling and exploration.
         </h1>
         <p className="text-xl text-muted-foreground mt-3 max-w-xl mx-auto">
@@ -32,9 +32,9 @@ export default function HomePage() {
           className="shadow-xl flex flex-col text-white bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80"
         >
           <CardHeader className="items-center text-center">
-            <Pencil className="w-10 h-10 mb-3" /> {/* Inherits text-white from Card */}
-            <CardTitle className="text-2xl font-semibold">Start a Story</CardTitle> {/* Inherits text-white from Card */}
-            <CardDescription className="pt-1 min-h-[3em] text-white"> {/* Explicitly set text-white */}
+            <Pencil className="w-10 h-10 mb-3 text-white" />
+            <CardTitle className="text-2xl font-semibold text-white">Start a Story</CardTitle>
+            <CardDescription className="pt-1 min-h-[3em] text-white">
               Unleash your creativity and begin crafting your own unique tales with AI assistance.
             </CardDescription>
           </CardHeader>
@@ -57,9 +57,9 @@ export default function HomePage() {
           className="shadow-xl flex flex-col text-white bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80"
         >
           <CardHeader className="items-center text-center">
-            <MessageSquareText className="w-10 h-10 mb-3" /> {/* Inherits text-white from Card */}
-            <CardTitle className="text-2xl font-semibold">Ask for Help</CardTitle> {/* Inherits text-white from Card */}
-            <CardDescription className="pt-1 min-h-[3em] text-white"> {/* Explicitly set text-white */}
+            <MessageSquareText className="w-10 h-10 mb-3 text-white" />
+            <CardTitle className="text-2xl font-semibold text-white">Ask for Help</CardTitle>
+            <CardDescription className="pt-1 min-h-[3em] text-white">
               Get kid-friendly answers to your school questions from our helpful AI companion.
             </CardDescription>
           </CardHeader>
@@ -82,9 +82,9 @@ export default function HomePage() {
           className="shadow-xl flex flex-col text-white bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80"
         >
           <CardHeader className="items-center text-center">
-            <BookOpen className="w-10 h-10 mb-3" /> {/* Inherits text-white from Card */}
-            <CardTitle className="text-2xl font-semibold">View Library</CardTitle> {/* Inherits text-white from Card */}
-            <CardDescription className="pt-1 min-h-[3em] text-white"> {/* Explicitly set text-white */}
+            <BookOpen className="w-10 h-10 mb-3 text-white" />
+            <CardTitle className="text-2xl font-semibold text-white">View Library</CardTitle>
+            <CardDescription className="pt-1 min-h-[3em] text-white">
               Explore a collection of stories created by fellow learners and discover new adventures.
             </CardDescription>
           </CardHeader>
