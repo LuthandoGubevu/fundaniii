@@ -18,7 +18,7 @@ export default function HomePage() {
           className="mb-6 mx-auto"
         />
         <h1 className="text-5xl font-bold tracking-tight text-foreground">
-          Welcome to Fundanii Ai!
+          Empowering young minds to learn, imagine, and grow through AI-powered storytelling and exploration.
         </h1>
         <p className="text-xl text-muted-foreground mt-3 max-w-xl mx-auto">
           Create, Learn, and Share Your Story.
