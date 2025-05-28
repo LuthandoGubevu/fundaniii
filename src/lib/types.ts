@@ -3,16 +3,16 @@ export interface Story {
   id: string;
   title: string;
   content: string;
-  author: string; 
-  authorId?: string; 
-  grade: string; 
-  subject: string; 
-  language: string; 
-  theme?: string; 
-  imageUrl?: string; 
-  createdAt: string; 
-  status?: 'Draft' | 'In Review' | 'Published'; 
-  upvotes?: number; 
+  author: string;
+  authorId?: string;
+  grade: string;
+  subject: string;
+  language: string;
+  theme?: string;
+  imageUrl?: string;
+  createdAt: string;
+  status?: 'Draft' | 'In Review' | 'Published';
+  upvotes?: number;
 }
 
 export interface ChatMessage {
@@ -25,8 +25,17 @@ export interface ChatMessage {
 
 export interface UserProfile {
   name: string;
-  avatarUrl?: string; 
+  avatarUrl?: string;
   mood?: Mood;
+  // Fields for follow functionality
+  following?: string[]; // Array of user IDs the current user is following
+  followersCount?: number; // How many users follow this user
+  uid?: string; // User's own ID
+  email?: string;
+  school?: string;
+  grade?: string;
+  surname?: string;
+  createdAt?: string;
 }
 
 export interface Mood {
@@ -39,14 +48,14 @@ export type StoryStatus = 'Draft' | 'In Review' | 'Shared';
 export interface DashboardStoryItem {
   id: string;
   title: string;
-  thumbnailUrl?: string; 
+  thumbnailUrl?: string;
   status: StoryStatus;
 }
 
 export interface Achievement {
   id: string;
   name: string;
-  icon: React.ElementType; 
+  icon: React.ElementType;
   achieved: boolean;
   description: string;
 }

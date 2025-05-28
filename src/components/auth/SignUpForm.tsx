@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "@/lib/firebase"; // Assuming db is exported for Firestore
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,7 +66,10 @@ export default function SignUpForm() {
           surname: values.surname,
           school: values.school,
           grade: values.grade,
-          createdAt: new Date().toISOString(),
+          createdAt: serverTimestamp(),
+          following: [], // Initialize following array
+          followersCount: 0, // Initialize followers count
+          avatarUrl: `https://placehold.co/100x100.png?text=${values.name.charAt(0)}${values.surname.charAt(0)}`, // Basic placeholder avatar
         });
 
         toast({
@@ -75,7 +78,7 @@ export default function SignUpForm() {
         });
         router.push("/"); // Redirect to home or dashboard after sign up
       } catch (error: any) {
-        console.error("Sign up error details:", error); // Log the full error object
+        console.error("Sign up error details:", error);
         let errorMessage = "Failed to create account. Please try again.";
         
         if (error.code === "auth/email-already-in-use") {
@@ -86,15 +89,16 @@ export default function SignUpForm() {
                      error.message.toLowerCase().includes("permission-denied"))
                    )
                   ) {
-          errorMessage = `Account created, but failed to save user details due to Firestore permissions. Please check your Firestore security rules to allow users to write to their own document in the 'users' collection (e.g., /users/{uid}). Firebase Error: ${error.message}`;
+          errorMessage = `Account created in Auth, but failed to save user details to Firestore due to permissions. Please check your Firestore security rules to allow users to write to their own document in the 'users' collection (e.g., /users/{uid}). Firebase Error: ${error.message}`;
         } else if (error.message) {
-          errorMessage = error.message; // Use the actual error message from Firebase if available
+          errorMessage = error.message;
         }
 
         toast({
           variant: "destructive",
           title: "Sign Up Failed",
           description: errorMessage,
+          duration: 9000, // Longer duration for important error messages
         });
       }
     });
