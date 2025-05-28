@@ -49,7 +49,7 @@ export default function StoryLibraryClientPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 w-full max-w-5xl mx-auto">
       <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Story Library</CardTitle>
