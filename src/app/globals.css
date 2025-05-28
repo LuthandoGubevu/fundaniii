@@ -160,34 +160,11 @@ html {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 30vh; /* Increased height to accommodate mountains */
-  overflow: hidden; /* Keep hills and mountains contained */
+  height: 20vh; /* Original height before mountains */
+  overflow: hidden;
 }
 
-.mountain {
-  position: absolute;
-  bottom: -1px;
-  border-radius: 60% 40% 0 0 / 100px 80px 0 0; /* Softer, larger radius for mountain tops */
-}
-
-.mountain.distant {
-  width: 120%;
-  height: 28vh; /* Tallest landscape element */
-  left: -10%;
-  background-color: hsl(230, 15%, 60%); /* Muted blue-grey */
-  z-index: 0;
-  border-radius: 70% 30% 0 0 / 120px 90px 0 0;
-}
-
-.mountain.mid {
-  width: 110%;
-  height: 24vh;
-  left: -5%;
-  bottom: -1vh; /* Slightly overlapping for depth */
-  background-color: hsl(230, 15%, 70%); /* Lighter muted blue-grey */
-  z-index: 1;
-  border-radius: 40% 60% 0 0 / 100px 80px 0 0;
-}
+/* Mountain styles removed */
 
 .hill {
   position: absolute;
@@ -200,7 +177,7 @@ html {
   height: 15vh;
   left: -5%;
   background-color: #8AE08A; /* Lighter green for distance */
-  z-index: 2; /* Updated z-index */
+  z-index: 1; /* Reverted z-index */
   border-radius: 40% 60% 0 0 / 70px 90px 0 0;
 }
 
@@ -210,7 +187,7 @@ html {
   left: -10%;
   bottom: -2vh; /* Slightly lower to overlap and create depth */
   background-color: #6BCB77; /* Medium green */
-  z-index: 3; /* Updated z-index */
+  z-index: 2; /* Reverted z-index */
   border-radius: 50% 50% 0 0 / 120px 100px 0 0;
 }
 
@@ -219,7 +196,7 @@ html {
   height: 12vh;
   left: 0%;
   background-color: #4DAA57; /* Darker green for foreground */
-  z-index: 4; /* Updated z-index */
+  z-index: 3; /* Reverted z-index */
   bottom: 0;
   border-radius: 60% 40% 0 0 / 100px 80px 0 0;
 }
