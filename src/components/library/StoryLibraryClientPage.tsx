@@ -8,7 +8,7 @@ import type { Story } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, FilterX } from "lucide-react";
+import { Search, FilterX, Loader2 } from "lucide-react"; // Added Loader2 here
 import { Button } from "../ui/button";
 
 const ALL_FILTER_VALUE = "_all_";
@@ -161,3 +161,4 @@ export default function StoryLibraryClientPage() {
     </div>
   );
 }
+
