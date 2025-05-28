@@ -42,7 +42,7 @@ export default function HomePage() {
         </Card>
 
         <Card 
-          style={{ backgroundColor: '#F7EB32' }} 
+          style={{ backgroundColor: '#D8C512' }} 
           className="shadow-xl flex flex-col text-white" 
         >
           <CardHeader className="items-center text-center">
