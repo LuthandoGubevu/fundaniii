@@ -59,7 +59,6 @@ export default function SignUpForm() {
         });
 
         // Store additional user information in Firestore
-        // This is a good place to store school, grade, etc.
         await setDoc(doc(db, "users", user.uid), {
           uid: user.uid,
           email: values.email,
@@ -76,11 +75,22 @@ export default function SignUpForm() {
         });
         router.push("/"); // Redirect to home or dashboard after sign up
       } catch (error: any) {
-        console.error("Sign up error:", error);
+        console.error("Sign up error details:", error); // Log the full error object
         let errorMessage = "Failed to create account. Please try again.";
+        
         if (error.code === "auth/email-already-in-use") {
           errorMessage = "This email is already in use. Please try another or sign in.";
+        } else if (error.code === "permission-denied" || 
+                   (error.message && 
+                    (error.message.toLowerCase().includes("missing or insufficient permissions") || 
+                     error.message.toLowerCase().includes("permission-denied"))
+                   )
+                  ) {
+          errorMessage = `Account created, but failed to save user details due to Firestore permissions. Please check your Firestore security rules to allow users to write to their own document in the 'users' collection (e.g., /users/{uid}). Firebase Error: ${error.message}`;
+        } else if (error.message) {
+          errorMessage = error.message; // Use the actual error message from Firebase if available
         }
+
         toast({
           variant: "destructive",
           title: "Sign Up Failed",
