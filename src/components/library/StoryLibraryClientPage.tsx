@@ -3,16 +3,17 @@
 
 import { useState, useEffect } from "react";
 import StoryCard from "@/components/story/StoryCard";
-import { dummyStories, storyGrades, storySubjects, storyLanguages } from "@/lib/dummy-data";
+import { storyGrades, storySubjects, storyLanguages } from "@/lib/dummy-data"; // Keep for filter dropdowns
 import type { Story } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, FilterX, Loader2 } from "lucide-react"; // Added Loader2 here
+import { Search, FilterX, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore";
 
 const ALL_FILTER_VALUE = "_all_";
-const LOCAL_STORAGE_STORIES_KEY = 'fundaniiUserStories';
 
 export default function StoryLibraryClientPage() {
   const [allStories, setAllStories] = useState<Story[]>([]);
@@ -24,25 +25,43 @@ export default function StoryLibraryClientPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load stories from localStorage and merge with dummyStories
-    const storedStoriesString = localStorage.getItem(LOCAL_STORAGE_STORIES_KEY);
-    const localUserStories: Story[] = storedStoriesString ? JSON.parse(storedStoriesString) : [];
-    
-    // Combine and remove duplicates (dummyStories first, then user stories, preferring user story if ID conflict)
-    const combinedStories = [...dummyStories];
-    const dummyStoryIds = new Set(dummyStories.map(s => s.id));
-    localUserStories.forEach(userStory => {
-      if (!dummyStoryIds.has(userStory.id)) {
-        combinedStories.unshift(userStory); // Add new user stories to the beginning
+    async function fetchStories() {
+      setIsLoading(true);
+      try {
+        const storiesCollectionRef = collection(db, "stories");
+        const q = query(storiesCollectionRef, orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        const fetchedStories: Story[] = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          // Convert Firestore Timestamp to ISO string for client-side compatibility
+          const createdAt = data.createdAt instanceof Timestamp 
+                            ? data.createdAt.toDate().toISOString() 
+                            : new Date().toISOString(); // Fallback if not a timestamp
+          return {
+            id: doc.id,
+            ...data,
+            createdAt,
+          } as Story;
+        });
+        setAllStories(fetchedStories);
+      } catch (error) {
+        console.error("Error fetching stories from Firestore:", error);
+        toast({
+          variant: "destructive",
+          title: "Error Loading Stories",
+          description: "Could not fetch stories from the library. Please try again later.",
+        });
+        // Optionally, set allStories to an empty array or keep dummy data as fallback
+        setAllStories([]); 
+      } finally {
+        setIsLoading(false);
       }
-    });
-
-    setAllStories(combinedStories);
-    setIsLoading(false);
+    }
+    fetchStories();
   }, []);
 
   useEffect(() => {
-    if (isLoading) return; // Don't filter until stories are loaded
+    if (isLoading) return; 
 
     let currentStories = [...allStories];
 
@@ -58,7 +77,7 @@ export default function StoryLibraryClientPage() {
     if (searchTerm) {
       currentStories = currentStories.filter(story => 
         story.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (story.content && story.content.toLowerCase().includes(searchTerm.toLowerCase())) || // check if content exists
+        (story.content && story.content.toLowerCase().includes(searchTerm.toLowerCase())) || 
         story.author.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -71,6 +90,10 @@ export default function StoryLibraryClientPage() {
     setLanguageFilter("");
     setSearchTerm("");
   };
+  
+  // Toast import is missing, let's add it
+  const { toast } = (typeof window !== 'undefined' && require('@/hooks/use-toast')) || { toast: () => {} };
+
 
   if (isLoading) {
     return (
@@ -150,15 +173,16 @@ export default function StoryLibraryClientPage() {
             <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <CardTitle className="text-xl">No Stories Found</CardTitle>
             <CardDescription className="mt-2">
-              Try adjusting your search or filters.
+              Try adjusting your search or filters, or create a new story!
             </CardDescription>
-            <Button onClick={resetFilters} variant="link" className="mt-4">
-              Clear all filters
-            </Button>
+            {(gradeFilter || subjectFilter || languageFilter || searchTerm) && (
+                <Button onClick={resetFilters} variant="link" className="mt-4">
+                Clear all filters
+                </Button>
+            )}
           </CardContent>
         </Card>
       )}
     </div>
   );
 }
-

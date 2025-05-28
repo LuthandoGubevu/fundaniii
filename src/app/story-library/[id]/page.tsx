@@ -1,40 +1,51 @@
 
-import { dummyStories } from "@/lib/dummy-data";
 import type { Story } from "@/lib/types";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, UserCircle, CalendarDays, Tag } from "lucide-react";
 import Image from "next/image";
 import { format } from 'date-fns';
+import { db } from "@/lib/firebase";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { notFound } from 'next/navigation';
 
-export async function generateStaticParams() {
-  return dummyStories.map((story) => ({
-    id: story.id,
-  }));
-}
+// Removed generateStaticParams as this page will be dynamically rendered
 
 async function getStory(id: string): Promise<Story | undefined> {
-  // In a real app, you would fetch this from a database
-  return dummyStories.find((story) => story.id === id);
+  try {
+    const storyRef = doc(db, "stories", id);
+    const storySnap = await getDoc(storyRef);
+
+    if (storySnap.exists()) {
+      const data = storySnap.data();
+      // Convert Firestore Timestamp to ISO string
+      const createdAt = data.createdAt instanceof Timestamp 
+                        ? data.createdAt.toDate().toISOString() 
+                        : (data.createdAt || new Date().toISOString()); // Fallback for existing data or if somehow not a Timestamp
+      return { 
+        id: storySnap.id, 
+        ...data,
+        createdAt,
+      } as Story;
+    } else {
+      return undefined;
+    }
+  } catch (error) {
+    console.error("Error fetching story from Firestore:", error);
+    return undefined;
+  }
 }
 
 export default async function SingleStoryPage({ params }: { params: { id: string } }) {
   const story = await getStory(params.id);
 
   if (!story) {
-    return (
-      <div className="text-center py-10">
-        <h1 className="text-2xl font-bold">Story not found</h1>
-        <p className="text-muted-foreground">The story you are looking for does not exist.</p>
-        <Button asChild variant="link" className="mt-4">
-          <Link href="/story-library">Back to Library</Link>
-        </Button>
-      </div>
-    );
+    // If story not found, use Next.js notFound utility to render a 404 page
+    notFound();
   }
-  const createdAt = new Date(story.createdAt);
+  const createdAtDate = new Date(story.createdAt);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -59,11 +70,10 @@ export default async function SingleStoryPage({ params }: { params: { id: string
           <CardTitle className="text-4xl font-bold">{story.title}</CardTitle>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground mt-2">
             <span className="flex items-center"><UserCircle className="w-4 h-4 mr-1.5" />By {story.author}</span>
-            <span className="flex items-center"><CalendarDays className="w-4 h-4 mr-1.5" />{format(createdAt, "MMMM d, yyyy")}</span>
+            <span className="flex items-center"><CalendarDays className="w-4 h-4 mr-1.5" />{format(createdAtDate, "MMMM d, yyyy")}</span>
           </div>
         </CardHeader>
         <CardContent className="prose prose-lg max-w-none dark:prose-invert prose-p:text-foreground/90 prose-headings:text-foreground">
-          {/* Using whitespace-pre-wrap to respect newlines from dummy data for better readability */}
           <p className="whitespace-pre-wrap">{story.content}</p>
         </CardContent>
         <CardFooter className="pt-6 border-t">

@@ -18,7 +18,8 @@ import { translateStory, TranslateStoryInput, TranslateStoryOutput } from "@/ai/
 import { generateStoryImage, GenerateStoryImageInput, GenerateStoryImageOutput } from "@/ai/flows/generate-story-image-flow";
 import { storyThemes, storyLanguages, storyGrades, storySubjects } from "@/lib/dummy-data";
 import type { Story } from "@/lib/types";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase"; // Import db
+import { collection, addDoc, serverTimestamp } from "firebase/firestore"; // Import Firestore functions
 import { Loader2, Wand2, LanguagesIcon, Image as ImageIcon, Share2, BookPlus } from "lucide-react";
 import Image from "next/image";
 
@@ -151,6 +152,12 @@ export default function CreateStoryClientPage() {
   };
 
   async function onShareToLibrary(values: z.infer<typeof storyDetailsSchema>) {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      toast({ variant: "destructive", title: "Not Authenticated", description: "You must be logged in to share a story." });
+      return;
+    }
+
     const firstPageText = pageContentForm.getValues("firstPageText");
     const theme = storyForm.getValues("theme");
 
@@ -161,32 +168,30 @@ export default function CreateStoryClientPage() {
 
     startSharingTransition(async () => {
       try {
-        const authorName = auth.currentUser?.displayName || auth.currentUser?.email || "Anonymous Learner";
+        const authorName = currentUser.displayName || currentUser.email || "Anonymous Learner";
         
-        const newStory: Story = {
-          id: Date.now().toString(), // Simple unique ID
+        // Story object to save to Firestore. Note: Firestore will auto-generate the ID.
+        const storyToSave = {
           title: values.title,
-          content: firstPageText, // Using first page text as main content for now
+          content: firstPageText, 
           author: authorName,
+          authorId: currentUser.uid,
           grade: values.grade,
           subject: values.subject,
           language: values.language,
           theme: theme || "General",
           imageUrl: firstPageImageUrl,
-          createdAt: new Date().toISOString(),
+          createdAt: serverTimestamp(), // Use Firestore server timestamp
         };
 
-        // Save to localStorage
-        const existingStoriesString = localStorage.getItem('fundaniiUserStories');
-        const existingStories: Story[] = existingStoriesString ? JSON.parse(existingStoriesString) : [];
-        localStorage.setItem('fundaniiUserStories', JSON.stringify([newStory, ...existingStories]));
+        await addDoc(collection(db, "stories"), storyToSave);
 
         toast({
             title: "Story Shared!",
-            description: "Your story has been added to the library for this session.",
+            description: "Your story has been successfully added to the library.",
         });
 
-        // Reset forms
+        // Reset forms and state
         storyForm.reset();
         pageContentForm.reset();
         storyDetailsForm.reset();
@@ -195,7 +200,7 @@ export default function CreateStoryClientPage() {
         setTranslatedStory(null);
 
       } catch (error) {
-        console.error("Error sharing story:", error);
+        console.error("Error sharing story to Firestore:", error);
         toast({ variant: "destructive", title: "Sharing Failed", description: "Could not share your story. Please try again." });
       }
     });
@@ -206,7 +211,7 @@ export default function CreateStoryClientPage() {
       <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Let's Brainstorm your story</CardTitle>
-          <CardDescription>Tell us what kind of story would you like to create & the AI will provide suggestions for you</CardDescription>
+          <CardDescription>Tell us what kind of story would you like to create &amp; the AI will provide suggestions for you</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...storyForm}>
