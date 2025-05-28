@@ -20,9 +20,9 @@ export default function HomePage() {
 
       {/* Action Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
-        <Card 
-          style={{ backgroundColor: '#912B8D' }} 
-          className="shadow-xl flex flex-col text-white"
+        <Card
+          style={{ backgroundColor: '#912B8D' }}
+          className="shadow-xl flex flex-col text-white bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80"
         >
           <CardHeader className="items-center text-center">
             <Zap className="w-10 h-10 mb-3" /> {/* Inherits text-white from Card */}
@@ -32,18 +32,22 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-grow flex flex-col justify-end">
-            <Button asChild size="lg" className="shadow-md hover:shadow-lg transition-shadow w-full mt-auto">
+            <Button
+              asChild
+              size="lg"
+              className="shadow-md hover:shadow-lg transition-shadow w-full mt-auto bg-white text-black hover:bg-gray-200"
+            >
               <Link href="/create-story">
-                <PlayCircle className="mr-2 h-5 w-5" /> {/* Uses primary-foreground (white) */}
+                <PlayCircle className="mr-2 h-5 w-5" />
                 Create Now
               </Link>
             </Button>
           </CardContent>
         </Card>
 
-        <Card 
-          style={{ backgroundColor: '#D8C512' }} 
-          className="shadow-xl flex flex-col text-white" 
+        <Card
+          style={{ backgroundColor: '#D8C512' }}
+          className="shadow-xl flex flex-col text-white bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80"
         >
           <CardHeader className="items-center text-center">
             <MessageSquareText className="w-10 h-10 mb-3" /> {/* Inherits text-white from Card */}
@@ -53,18 +57,22 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-grow flex flex-col justify-end">
-            <Button asChild variant="secondary" size="lg" className="shadow-md hover:shadow-lg transition-shadow w-full mt-auto text-white hover:bg-secondary/90">
+            <Button
+              asChild
+              size="lg"
+              className="shadow-md hover:shadow-lg transition-shadow w-full mt-auto bg-white text-black hover:bg-gray-200"
+            >
               <Link href="/ask-question">
-                <HelpCircle className="mr-2 h-5 w-5" /> {/* Uses text-white from Button class */}
+                <HelpCircle className="mr-2 h-5 w-5" />
                 Ask Question
               </Link>
             </Button>
           </CardContent>
         </Card>
 
-        <Card 
-          style={{ backgroundColor: '#DD4AB0' }} 
-          className="shadow-xl flex flex-col text-white"
+        <Card
+          style={{ backgroundColor: '#DD4AB0' }}
+          className="shadow-xl flex flex-col text-white bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80"
         >
           <CardHeader className="items-center text-center">
             <BookOpen className="w-10 h-10 mb-3" /> {/* Inherits text-white from Card */}
@@ -74,14 +82,13 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-grow flex flex-col justify-end">
-            <Button 
-              asChild 
-              variant="outline" 
-              size="lg" 
-              className="shadow-md hover:shadow-lg transition-shadow w-full mt-auto border-white text-white hover:bg-white/20 hover:text-white"
+            <Button
+              asChild
+              size="lg"
+              className="shadow-md hover:shadow-lg transition-shadow w-full mt-auto bg-white text-black hover:bg-gray-200"
             >
               <Link href="/story-library">
-                <Library className="mr-2 h-5 w-5" /> {/* Uses text-white from Button class */}
+                <Library className="mr-2 h-5 w-5" />
                 Browse Stories
               </Link>
             </Button>
