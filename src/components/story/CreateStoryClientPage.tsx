@@ -10,12 +10,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Label } from "@/components/ui/label"; // Added import for basic Label
 import { useToast } from "@/hooks/use-toast";
 import { storyAssistance, StoryAssistanceInput, StoryAssistanceOutput } from "@/ai/flows/ai-story-guide";
 import { translateStory, TranslateStoryInput, TranslateStoryOutput } from "@/ai/flows/ai-translator";
 import { storyThemes, storyLanguages } from "@/lib/dummy-data";
 import { Loader2, Wand2, LanguagesIcon, Image as ImageIcon } from "lucide-react";
-import Image from "next/image"; // Added import for next/image
+import Image from "next/image";
 
 const storyFormSchema = z.object({
   storyText: z.string().min(10, { message: "Your story needs to be a bit longer!" }),
@@ -24,6 +25,10 @@ const storyFormSchema = z.object({
 
 const translateFormSchema = z.object({
   targetLanguage: z.string().min(1, { message: "Please select a language." }),
+});
+
+const pageContentSchema = z.object({
+  firstPageText: z.string().optional(),
 });
 
 export default function CreateStoryClientPage() {
@@ -43,6 +48,13 @@ export default function CreateStoryClientPage() {
   const translateForm = useForm<z.infer<typeof translateFormSchema>>({
     resolver: zodResolver(translateFormSchema),
     defaultValues: { targetLanguage: "" },
+  });
+
+  const pageContentForm = useForm<z.infer<typeof pageContentSchema>>({
+    resolver: zodResolver(pageContentSchema),
+    defaultValues: {
+      firstPageText: "",
+    },
   });
 
   async function onGetAssistance(values: z.infer<typeof storyFormSchema>) {
@@ -86,6 +98,8 @@ export default function CreateStoryClientPage() {
   }
   
   const handleGetAiImage = () => {
+    // const pageText = pageContentForm.getValues("firstPageText");
+    // console.log("Page 1 Text for image generation:", pageText); 
     toast({
       title: "Feature Coming Soon!",
       description: "The 'Get AI Image' feature is under development. Stay tuned!",
@@ -93,7 +107,7 @@ export default function CreateStoryClientPage() {
     // In the future, you would call an AI image generation flow here
     // and update setFirstPageImageUrl with the result.
     // For now, let's simulate an image being set for testing:
-    // setFirstPageImageUrl("https://placehold.co/600x400.png?text=AI+Generated!"); 
+    // setFirstPageImageUrl("https://placehold.co/600x400.png"); 
   };
 
   return (
@@ -184,26 +198,37 @@ export default function CreateStoryClientPage() {
               <CardDescription>Write the text for the first page of your story and generate an illustration.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <FormItem>
-                <FormLabel className="text-lg">Page 1 Text</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="The adventure begins here... describe the scene, characters, and what's happening."
-                    className="min-h-[150px] text-base resize-none bg-background/70"
-                    // You might want to add state management for this textarea's value
+              <Form {...pageContentForm}>
+                <form className="space-y-4"> {/* Added a basic form wrapper, no submit needed for now */}
+                  <FormField
+                    control={pageContentForm.control}
+                    name="firstPageText"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-lg">Page 1 Text</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="The adventure begins here... describe the scene, characters, and what's happening."
+                            className="min-h-[150px] text-base resize-none bg-background/70"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </FormControl>
-              </FormItem>
+                </form>
+              </Form>
 
               <div>
-                <FormLabel className="text-lg">Page 1 Illustration</FormLabel>
+                <Label className="text-lg font-medium">Page 1 Illustration</Label> {/* Changed from FormLabel to Label */}
                 <div className="mt-2 aspect-video w-full bg-muted/30 rounded-md flex items-center justify-center border border-dashed border-foreground/30 p-2">
                   {firstPageImageUrl ? (
                     <Image
                       src={firstPageImageUrl}
                       alt="Generated story illustration"
                       width={400}
-                      height={225} // Adjusted for 16:9 aspect ratio
+                      height={225}
                       className="rounded-md object-contain max-h-full"
                       data-ai-hint="story illustration"
                     />
@@ -272,7 +297,6 @@ export default function CreateStoryClientPage() {
         </CardContent>
       </Card>
       
-      {/* Removed the old "Illustrate My Story" button from here */}
     </div>
   );
 }
