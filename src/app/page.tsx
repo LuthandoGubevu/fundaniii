@@ -4,7 +4,6 @@ import StoryProgressTracker from "@/components/dashboard/StoryProgressTracker";
 import DailyPromptCard from "@/components/dashboard/DailyPromptCard";
 import CreativeToolbox from "@/components/dashboard/CreativeToolbox";
 import AchievementsPanel from "@/components/dashboard/AchievementsPanel";
-import FeaturedStoryCarousel from "@/components/dashboard/FeaturedStoryCarousel";
 import LearningBuddyCorner from "@/components/dashboard/LearningBuddyCorner";
 import { Separator } from "@/components/ui/separator";
 
@@ -35,9 +34,7 @@ export default function DashboardPage() {
         <div className="md:col-span-1 hidden md:block"> {/* Empty div for spacing, or another component */} </div>
       </div>
       
-      <Separator className="my-8 bg-primary/20"/>
-      
-      <FeaturedStoryCarousel />
+      {/* FeaturedStoryCarousel section removed */}
 
     </div>
   );
