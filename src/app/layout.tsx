@@ -62,7 +62,7 @@ export default function RootLayout({
                       height={32}
                       className="text-primary" // Keep className, though text-primary might not directly affect image
                     />
-                    <span className="font-semibold text-lg text-primary">Fundanii Ai</span>
+                    {/* Removed Fundanii Ai text span here */}
                  </Link>                 
                  <SidebarTrigger /> {/* Mobile trigger */}
               </header>
@@ -77,4 +77,3 @@ export default function RootLayout({
     </html>
   );
 }
-

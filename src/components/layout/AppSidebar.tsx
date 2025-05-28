@@ -40,7 +40,7 @@ export function AppSidebar() {
                   height={32} 
                   className="text-primary" // Keep className in case of styling needs, though text-primary might not directly affect image
                 />
-                <span className="font-bold text-lg text-primary group-data-[collapsible=icon]:hidden">Fundanii Ai</span>
+                {/* Removed Fundanii Ai text span here */}
             </Link>
             {/* Desktop trigger - toggles between expanded and icon-only */}
             <SidebarTrigger className="hidden md:flex" />
@@ -79,4 +79,3 @@ export function AppSidebar() {
     </>
   );
 }
-
