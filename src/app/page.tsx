@@ -4,7 +4,7 @@ import StoryProgressTracker from "@/components/dashboard/StoryProgressTracker";
 import DailyPromptCard from "@/components/dashboard/DailyPromptCard";
 import CreativeToolbox from "@/components/dashboard/CreativeToolbox";
 import AchievementsPanel from "@/components/dashboard/AchievementsPanel";
-import LearningBuddyCorner from "@/components/dashboard/LearningBuddyCorner";
+// LearningBuddyCorner import removed as it's no longer used on this page
 import { Separator } from "@/components/ui/separator";
 
 export default function DashboardPage() {
@@ -26,16 +26,8 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      <Separator className="my-8 bg-primary/20"/>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8 items-start">
-        <LearningBuddyCorner />
-        {/* Placeholder for another potential widget or can be left for FeaturedStoryCarousel to span if needed */}
-        <div className="md:col-span-1 hidden md:block"> {/* Empty div for spacing, or another component */} </div>
-      </div>
+      {/* The Separator and grid row containing LearningBuddyCorner have been removed */}
       
-      {/* FeaturedStoryCarousel section removed */}
-
     </div>
   );
 }
