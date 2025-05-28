@@ -1,107 +1,54 @@
 
-import Link from "next/link";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlayCircle, HelpCircle, Library, Pencil, MessageSquareText, BookOpen } from "lucide-react";
+import WelcomeSection from "@/components/dashboard/WelcomeSection";
+import StoryProgressTracker from "@/components/dashboard/StoryProgressTracker";
+import DailyPromptCard from "@/components/dashboard/DailyPromptCard";
+import CreativeToolbox from "@/components/dashboard/CreativeToolbox";
+import AchievementsPanel from "@/components/dashboard/AchievementsPanel";
+import FeaturedStoryCarousel from "@/components/dashboard/FeaturedStoryCarousel";
+import LearningBuddyCorner from "@/components/dashboard/LearningBuddyCorner";
+import NavigationShortcuts from "@/components/dashboard/NavigationShortcuts";
+import { Separator } from "@/components/ui/separator";
 
-export default function HomePage() {
+export default function DashboardPage() {
   return (
-    <div className="flex flex-col items-center"> {/* Removed w-full */}
-      {/* Title and Description */}
-      <div className="mb-12 text-center">
-        <Image
-          src="/fundanii-logo-original.png"
-          alt="Fundanii Ai Logo"
-          width={600}
-          height={600}
-          className="mb-6 mx-auto"
-        />
-        <h4 className="text-2xl font-bold tracking-tight text-foreground max-w-[500px] mx-auto">
-          Empowering young minds to learn, imagine, and grow through AI-powered storytelling and exploration.
-        </h4>
-        <p className="text-xl text-muted-foreground mt-3 max-w-xl mx-auto">
-          Create, Learn, and Share Your Story.
-        </p>
+    <div className="w-full max-w-7xl mx-auto p-2 sm:p-4 md:p-6 lg:p-8 space-y-8 min-h-screen">
+      
+      <WelcomeSection />
+
+      <Separator className="my-8 bg-primary/20"/>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8">
+        <div className="lg:col-span-2 space-y-6 xl:space-y-8">
+          <StoryProgressTracker />
+          <DailyPromptCard />
+        </div>
+        <div className="space-y-6 xl:space-y-8">
+          <CreativeToolbox />
+          <AchievementsPanel />
+        </div>
       </div>
+      
+      <Separator className="my-8 bg-primary/20"/>
 
-      {/* Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
-        <Card
-          style={{ backgroundColor: '#6EA719' }}
-          className="shadow-xl flex flex-col text-white bg-card/90 backdrop-blur-sm supports-[backdrop-filter]:bg-card/90"
-        >
-          <CardHeader className="items-center text-center">
-            <Pencil className="w-10 h-10 mb-3 text-white" />
-            <CardTitle className="text-2xl font-semibold text-white">Start a Story</CardTitle>
-            <CardDescription className="pt-1 min-h-[3em] text-white">
-              Unleash your creativity and begin crafting your own unique tales with AI assistance.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex-grow flex flex-col justify-end">
-            <Button
-              asChild
-              size="lg"
-              className="shadow-md hover:shadow-lg transition-shadow w-full mt-auto bg-white text-black hover:bg-gray-200"
-            >
-              <Link href="/create-story">
-                <PlayCircle className="mr-2 h-5 w-5" />
-                Create Now
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card
-          style={{ backgroundColor: '#FFC60B' }}
-          className="shadow-xl flex flex-col text-white bg-card/90 backdrop-blur-sm supports-[backdrop-filter]:bg-card/90"
-        >
-          <CardHeader className="items-center text-center">
-            <MessageSquareText className="w-10 h-10 mb-3 text-white" />
-            <CardTitle className="text-2xl font-semibold text-white">Ask for Help</CardTitle>
-            <CardDescription className="pt-1 min-h-[3em] text-white">
-              Get kid-friendly answers to your school questions from our helpful AI companion.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex-grow flex flex-col justify-end">
-            <Button
-              asChild
-              size="lg"
-              className="shadow-md hover:shadow-lg transition-shadow w-full mt-auto bg-white text-black hover:bg-gray-200"
-            >
-              <Link href="/ask-question">
-                <HelpCircle className="mr-2 h-5 w-5" />
-                Ask Question
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card
-          style={{ backgroundColor: '#A8218E' }}
-          className="shadow-xl flex flex-col text-white bg-card/90 backdrop-blur-sm supports-[backdrop-filter]:bg-card/90"
-        >
-          <CardHeader className="items-center text-center">
-            <BookOpen className="w-10 h-10 mb-3 text-white" />
-            <CardTitle className="text-2xl font-semibold text-white">View Library</CardTitle>
-            <CardDescription className="pt-1 min-h-[3em] text-white">
-              Explore a collection of stories created by fellow learners and discover new adventures.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex-grow flex flex-col justify-end">
-            <Button
-              asChild
-              size="lg"
-              className="shadow-md hover:shadow-lg transition-shadow w-full mt-auto bg-white text-black hover:bg-gray-200"
-            >
-              <Link href="/story-library">
-                <Library className="mr-2 h-5 w-5" />
-                Browse Stories
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Navigation Shortcuts might be better integrated into a specific section or as a more compact element */}
+      {/* For now, placing them as their own section */}
+      <div>
+        <h3 className="text-2xl font-bold text-primary-foreground mb-4">Quick Actions</h3>
+        <NavigationShortcuts />
       </div>
+      
+      <Separator className="my-8 bg-primary/20"/>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8 items-start">
+        <LearningBuddyCorner />
+        {/* Placeholder for another potential widget or can be left for FeaturedStoryCarousel to span if needed */}
+        <div className="md:col-span-1 hidden md:block"> {/* Empty div for spacing, or another component */} </div>
+      </div>
+      
+      <Separator className="my-8 bg-primary/20"/>
+      
+      <FeaturedStoryCarousel />
+
     </div>
   );
 }
