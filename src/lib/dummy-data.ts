@@ -1,6 +1,6 @@
 
 import type { Story, UserProfile, Mood, DashboardStoryItem, Achievement, DailyPrompt, FeaturedStory, SubjectItem } from "./types";
-import { BookOpenCheck, Edit3, CheckCircle, Award, Star, ThumbsUp, MessageCircle, Pencil, Lightbulb, Zap, BookHeart, Users, Languages, Image as ImageIconLucide, Wand2, Rocket, Palette, Globe, Brain, BookText, Sigma, FlaskConical, HeartHandshake, Sparkles } from "lucide-react";
+import { BookOpenCheck, Edit3, CheckCircle, Award, Star, ThumbsUp, MessageCircle, Pencil, Lightbulb, Zap, BookHeart, Users, Languages, Image as ImageIconLucide, Wand2, Rocket, Palette, Globe, Brain, BookText, Sigma, FlaskConical, HeartHandshake, Sparkles, BookOpen } from "lucide-react";
 
 export const dummyStories: Story[] = [
   {
@@ -199,3 +199,4 @@ export const studySubjects: SubjectItem[] = [
   { id: "readwrite", name: "Reading & Writing", icon: BookOpen },
   { id: "lifeori", name: "Life Orientation", icon: HeartHandshake },
 ];
+
