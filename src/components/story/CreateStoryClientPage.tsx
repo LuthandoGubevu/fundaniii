@@ -94,8 +94,8 @@ export default function CreateStoryClientPage() {
     <div className="space-y-8 w-full max-w-3xl">
       <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold">Create Your Story</CardTitle>
-          <CardDescription>Let your imagination flow! Write your story below and use our AI tools to help.</CardDescription>
+          <CardTitle className="text-3xl font-bold">Let's Brainstorm your story</CardTitle>
+          <CardDescription>Tell us what kind of story would you like to create & the AI will provide suggestions for you</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...storyForm}>
