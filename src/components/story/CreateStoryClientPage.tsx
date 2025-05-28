@@ -8,7 +8,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +16,7 @@ import { storyAssistance, StoryAssistanceInput, StoryAssistanceOutput } from "@/
 import { translateStory, TranslateStoryInput, TranslateStoryOutput } from "@/ai/flows/ai-translator";
 import { generateStoryImage, GenerateStoryImageInput, GenerateStoryImageOutput } from "@/ai/flows/generate-story-image-flow";
 import { storyThemes, storyLanguages } from "@/lib/dummy-data";
-import { Loader2, Wand2, LanguagesIcon, Image as ImageIcon } from "lucide-react";
+import { Loader2, Wand2, LanguagesIcon, Image as ImageIcon, Share2 } from "lucide-react";
 import Image from "next/image";
 
 const storyFormSchema = z.object({
@@ -37,6 +37,7 @@ export default function CreateStoryClientPage() {
   const [isAssistanceLoading, startAssistanceTransition] = useTransition();
   const [isTranslationLoading, startTranslationTransition] = useTransition();
   const [isImageGenerating, startImageGenerationTransition] = useTransition();
+  const [isSharingLoading, startSharingTransition] = useTransition(); // For future use
   
   const [aiSuggestions, setAiSuggestions] = useState<StoryAssistanceOutput | null>(null);
   const [translatedStory, setTranslatedStory] = useState<string | null>(null);
@@ -111,7 +112,7 @@ export default function CreateStoryClientPage() {
     }
     const pageText = pageContentForm.getValues("firstPageText");
 
-    setFirstPageImageUrl(null); // Clear previous image / show loading state implicitly
+    setFirstPageImageUrl(null); 
 
     startImageGenerationTransition(async () => {
       try {
@@ -131,10 +132,27 @@ export default function CreateStoryClientPage() {
           title: "Image Generation Failed",
           description: errorMessage,
         });
-        setFirstPageImageUrl(null); // Ensure placeholder is shown on error
+        setFirstPageImageUrl(null); 
       }
     });
   };
+
+  function handleShareToLibrary() {
+    // In a real app, you'd collect story data and send it to a backend
+    const pageText = pageContentForm.getValues("firstPageText");
+    if (!firstPageImageUrl || !pageText) {
+        toast({variant: "destructive", title: "Missing Content", description: "Image or text for the page is missing."});
+        return;
+    }
+    startSharingTransition(async () => {
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1000)); 
+        toast({
+            title: "Sharing to Library...",
+            description: "This feature is coming soon! Your story page would be shared here.",
+        });
+    });
+  }
 
   return (
     <div className="space-y-8 w-full max-w-3xl">
@@ -286,6 +304,44 @@ export default function CreateStoryClientPage() {
         </>
       )}
 
+      {firstPageImageUrl && (
+        <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
+          <CardHeader>
+            <CardTitle>Your First Page Preview</CardTitle>
+            <CardDescription>Here's how your first page looks. You can share it to the library!</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="aspect-video w-full bg-muted/30 rounded-md flex items-center justify-center border border-foreground/30 overflow-hidden">
+              <Image
+                src={firstPageImageUrl}
+                alt="Preview of generated story illustration"
+                width={600} 
+                height={338} 
+                className="object-contain w-full h-full"
+                data-ai-hint="story preview"
+              />
+            </div>
+            <div>
+              <h4 className="font-semibold text-md mb-1">Page Text:</h4>
+              <p className="text-sm text-muted-foreground bg-background/50 p-3 rounded-md whitespace-pre-wrap">
+                {pageContentForm.getValues("firstPageText") || "No text entered for this page."}
+              </p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={handleShareToLibrary} className="w-full" disabled={isSharingLoading}>
+              {isSharingLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Share2 className="mr-2 h-4 w-4" />
+              )}
+              Share to Library (Coming Soon)
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
+
+
       <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
         <CardHeader>
           <CardTitle>Translate Your Story</CardTitle>
@@ -336,3 +392,6 @@ export default function CreateStoryClientPage() {
     </div>
   );
 }
+
+
+    
