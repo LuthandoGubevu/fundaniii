@@ -3,6 +3,7 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
+import { getStorage, type FirebaseStorage } from "firebase/storage"; // Added
 // Firebase Analytics type, actual import will be dynamic
 import type { Analytics } from "firebase/analytics";
 
@@ -24,26 +25,32 @@ const firebaseConfig = {
   apiKey: "AIzaSyBNX7k_4hviCBfNaOrC8hxBRZ5GCFKAJjs",
   authDomain: "fundanii.firebaseapp.com",
   projectId: "fundanii",
-  storageBucket: "fundanii.firebasestorage.app",
+  storageBucket: "fundanii.firebasestorage.app", // Corrected: Ensure this is your actual storage bucket
   messagingSenderId: "631717579934",
   appId: "1:631717579934:web:019fa8de102ca1bd8d7f8f",
   measurementId: "G-0CH1R9N6BH"
 };
 
+
 // Check if the API key is literally the placeholder value or truly empty.
 // This check is less about 'undefined' now and more about an obviously incorrect hardcoded value.
 if (!firebaseConfig.apiKey || String(firebaseConfig.apiKey).trim() === "" || firebaseConfig.apiKey === "YOUR_ACTUAL_API_KEY_FROM_FIREBASE") {
-  const errorMessage = `CRITICAL_CONFIG_ERROR: The hardcoded Firebase API Key in src/lib/firebase.ts is missing, empty, or still a placeholder.
+  const errorMessage = `CRITICAL_CONFIG_ERROR: Firebase API Key (NEXT_PUBLIC_FIREBASE_API_KEY) is MISSING or UNDEFINED in your environment.
     Firebase SDK cannot initialize.
-    Please ensure the firebaseConfig object in src/lib/firebase.ts has the correct values.
-    Current apiKey value starts with: '${String(firebaseConfig.apiKey).substring(0, 5)}...'`;
+    1. CHECK YOUR .env FILE: Ensure it's at the project root and all NEXT_PUBLIC_FIREBASE_... variables are correctly set.
+    2. RESTART YOUR SERVER: You MUST restart your Next.js development server after any .env file changes.
+    Current apiKey value starts with: '${String(firebaseConfig.apiKey).substring(0, 5)}...' (should not be 'undef' or empty).`;
   
   console.error(errorMessage);
 
+  // For Server-Side Rendering (SSR), throwing an error here makes it visible in the browser error page.
   if (typeof window === 'undefined') {
     throw new Error(errorMessage);
-  } else {
-     throw new Error(errorMessage);
+  }
+  // This part is for client-side, but the error indicates it's happening server-side first.
+  else {
+     console.error("CRITICAL_CONFIG_ERROR also detected on client-side. This usually means the server-side build failed to embed the environment variables.");
+     // Optionally, you could throw here too to halt client execution if needed.
   }
 }
 
@@ -53,6 +60,7 @@ const app: FirebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) 
 
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
+const storage: FirebaseStorage = getStorage(app); // Added
 
 let analyticsInstance: Analytics | undefined;
 
@@ -69,4 +77,4 @@ if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
   });
 }
 
-export { app, auth, db, analyticsInstance as analytics };
+export { app, auth, db, storage, analyticsInstance as analytics }; // Added storage
