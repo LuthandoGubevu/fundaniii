@@ -1,6 +1,6 @@
 
 import type { Story, UserProfile, Mood, DashboardStoryItem, Achievement, DailyPrompt, FeaturedStory } from "./types";
-import { BookOpenCheck, Edit3, CheckCircle, Award, Star, ThumbsUp, MessageCircle, Pencil, Lightbulb, Zap, BookHeart, Users, Languages, Image as ImageIconLucide } from "lucide-react";
+import { BookOpenCheck, Edit3, CheckCircle, Award, Star, ThumbsUp, MessageCircle, Pencil, Lightbulb, Zap, BookHeart, Users, Languages, Image as ImageIconLucide, Wand2 } from "lucide-react";
 
 export const dummyStories: Story[] = [
   {
