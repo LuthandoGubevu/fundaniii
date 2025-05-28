@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import StoryCard from "@/components/story/StoryCard";
-import { storyGrades, storySubjects, storyLanguages, dummyStories } from "@/lib/dummy-data"; // Added dummyStories import
+import { storyGrades, storySubjects, storyLanguages, dummyStories } from "@/lib/dummy-data";
 import type { Story } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Search, FilterX, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore";
-import { useToast } from "@/hooks/use-toast"; // Added missing useToast import
+import { collection, getDocs, query, orderBy, Timestamp, onSnapshot } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 const ALL_FILTER_VALUE = "_all_";
 
@@ -24,49 +24,47 @@ export default function StoryLibraryClientPage() {
   const [languageFilter, setLanguageFilter] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast(); // Initialize toast
+  const { toast } = useToast();
 
   useEffect(() => {
-    async function fetchStories() {
-      setIsLoading(true);
-      try {
-        const storiesCollectionRef = collection(db, "stories");
-        const q = query(storiesCollectionRef, orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
-        const fetchedStories: Story[] = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          const createdAt = data.createdAt instanceof Timestamp 
-                            ? data.createdAt.toDate().toISOString() 
-                            : new Date().toISOString(); 
-          return {
-            id: doc.id,
-            ...data,
-            createdAt,
-          } as Story;
-        });
+    setIsLoading(true);
+    const storiesCollectionRef = collection(db, "stories");
+    const q = query(storiesCollectionRef, orderBy("createdAt", "desc"));
 
-        if (fetchedStories.length > 0) {
-          setAllStories(fetchedStories);
-        } else {
-          // If Firestore is empty, use dummy stories as a fallback
-          console.log("No stories found in Firestore, using dummy stories.");
-          setAllStories(dummyStories);
-        }
-      } catch (error) {
-        console.error("Error fetching stories from Firestore:", error);
-        toast({
-          variant: "destructive",
-          title: "Error Loading Stories",
-          description: "Could not fetch stories. Displaying placeholder stories instead.",
-        });
-        // Fallback to dummy stories on error
-        setAllStories(dummyStories); 
-      } finally {
-        setIsLoading(false);
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const fetchedStories: Story[] = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        const createdAt = data.createdAt instanceof Timestamp 
+                          ? data.createdAt.toDate().toISOString() 
+                          : (data.createdAt || new Date().toISOString()); 
+        return {
+          id: doc.id,
+          ...data,
+          upvotes: data.upvotes || 0, // Ensure upvotes defaults to 0
+          createdAt,
+        } as Story;
+      });
+
+      if (fetchedStories.length > 0) {
+        setAllStories(fetchedStories);
+      } else {
+        console.log("No stories found in Firestore, using dummy stories as fallback.");
+        setAllStories(dummyStories.map(s => ({...s, upvotes: s.upvotes || 0})));
       }
-    }
-    fetchStories();
-  }, [toast]); // Added toast to dependency array as it's used in the effect
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Error fetching stories from Firestore:", error);
+      toast({
+        variant: "destructive",
+        title: "Error Loading Stories",
+        description: "Could not fetch stories. Displaying placeholder stories instead.",
+      });
+      setAllStories(dummyStories.map(s => ({...s, upvotes: s.upvotes || 0}))); 
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe(); // Cleanup onSnapshot listener
+  }, [toast]);
 
   useEffect(() => {
     if (isLoading) return; 
@@ -99,6 +97,14 @@ export default function StoryLibraryClientPage() {
     setSearchTerm("");
   };
   
+  const handleStoryLikeUpdate = (storyId: string, newLikes: number) => {
+    setAllStories(prevStories => 
+      prevStories.map(story => 
+        story.id === storyId ? { ...story, upvotes: newLikes } : story
+      )
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -168,7 +174,7 @@ export default function StoryLibraryClientPage() {
       {filteredStories.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStories.map((story) => (
-            <StoryCard key={story.id} story={story} />
+            <StoryCard key={story.id} story={story} onLikeUpdated={handleStoryLikeUpdate} />
           ))}
         </div>
       ) : (
@@ -190,5 +196,3 @@ export default function StoryLibraryClientPage() {
     </div>
   );
 }
-
-    
