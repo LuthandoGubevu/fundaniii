@@ -7,52 +7,42 @@ import { getFirestore, type Firestore } from "firebase/firestore";
 import type { Analytics } from "firebase/analytics";
 
 // ====================================================================================
-// CRITICAL: FIREBASE CONFIGURATION VIA ENVIRONMENT VARIABLES
+// WARNING: HARDCODED FIREBASE CONFIGURATION
 // ====================================================================================
-// Your web app's Firebase configuration is sourced from environment variables.
-// These variables (e.g., NEXT_PUBLIC_FIREBASE_API_KEY) MUST be defined in a .env file
-// (e.g., .env or .env.local) located at the ROOT of your project.
+// The Firebase configuration below is hardcoded directly into the source code.
+// This is generally NOT RECOMMENDED for production applications due to security risks,
+// as these keys will be visible in your deployed JavaScript bundle.
 //
-// Example .env file content:
-// NEXT_PUBLIC_FIREBASE_API_KEY="AIzaSyXXXXXXXXXXXXXXXXXXXXXX"
-// NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your-project-id.firebaseapp.com"
-// NEXT_PUBLIC_FIREBASE_PROJECT_ID="your-project-id"
-// // ... and so on for all Firebase config keys.
+// The PREFERRED METHOD is to use environment variables (e.g., from a .env file)
+// and ensure your Next.js server is correctly loading them.
 //
-// !!! VERY IMPORTANT: After creating or modifying your .env file,
-// YOU MUST COMPLETELY STOP AND RESTART YOUR NEXT.JS DEVELOPMENT SERVER
-// for changes to take effect. (Stop the server with Ctrl+C and run `npm run dev` or `yarn dev` again).
+// This hardcoded configuration is provided to help bypass potential .env loading
+// issues during development. REMEMBER TO REVERT TO ENVIRONMENT VARIABLES
+// AND SECURE YOUR KEYS BEFORE DEPLOYING TO PRODUCTION.
 // ====================================================================================
-
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+  apiKey: "AIzaSyBNX7k_4hviCBfNaOrC8hxBRZ5GCFKAJjs",
+  authDomain: "fundanii.firebaseapp.com",
+  projectId: "fundanii",
+  storageBucket: "fundanii.firebasestorage.app",
+  messagingSenderId: "631717579934",
+  appId: "1:631717579934:web:019fa8de102ca1bd8d7f8f",
+  measurementId: "G-0CH1R9N6BH"
 };
 
-// Check if the API key is loaded correctly. This check runs on both server and client.
-if (!firebaseConfig.apiKey || String(firebaseConfig.apiKey).trim() === "" || firebaseConfig.apiKey === "undefined") {
-  const errorMessage = `CRITICAL_CONFIG_ERROR: Firebase API Key (NEXT_PUBLIC_FIREBASE_API_KEY) is MISSING or UNDEFINED in your environment.
+// Check if the API key is literally the placeholder value or truly empty.
+// This check is less about 'undefined' now and more about an obviously incorrect hardcoded value.
+if (!firebaseConfig.apiKey || String(firebaseConfig.apiKey).trim() === "" || firebaseConfig.apiKey === "YOUR_ACTUAL_API_KEY_FROM_FIREBASE") {
+  const errorMessage = `CRITICAL_CONFIG_ERROR: The hardcoded Firebase API Key in src/lib/firebase.ts is missing, empty, or still a placeholder.
     Firebase SDK cannot initialize.
-    1. CHECK YOUR .env FILE: Ensure it's at the project root and all NEXT_PUBLIC_FIREBASE_... variables are correctly set.
-    2. RESTART YOUR SERVER: You MUST restart your Next.js development server after any .env file changes.
-    Current apiKey value starts with: '${String(firebaseConfig.apiKey).substring(0, 5)}...' (should not be 'undef' or empty).`;
+    Please ensure the firebaseConfig object in src/lib/firebase.ts has the correct values.
+    Current apiKey value starts with: '${String(firebaseConfig.apiKey).substring(0, 5)}...'`;
   
   console.error(errorMessage);
 
-  // For Server-Side Rendering (SSR), throwing an error here can be more visible 
-  // than just a console.error if logs are hard to access.
   if (typeof window === 'undefined') {
     throw new Error(errorMessage);
-  }
-  // For client-side, the console.error might be sufficient, or you could implement
-  // a UI to show this critical error. We re-throw here to halt execution if on client.
-  // This ensures the error is prominently displayed if console is missed.
-  else {
+  } else {
      throw new Error(errorMessage);
   }
 }
@@ -61,7 +51,6 @@ if (!firebaseConfig.apiKey || String(firebaseConfig.apiKey).trim() === "" || fir
 // The getApps().length check prevents reinitializing Firebase, especially during client-side hot reloads.
 const app: FirebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// These will still throw an error if initializeApp failed due to a malformed (but non-empty) API key.
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
 
