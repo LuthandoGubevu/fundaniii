@@ -6,7 +6,24 @@ import { getFirestore, type Firestore } from "firebase/firestore";
 // Firebase Analytics type, actual import will be dynamic
 import type { Analytics } from "firebase/analytics";
 
-// Your web app's Firebase configuration is now sourced from environment variables
+// ====================================================================================
+// CRITICAL: FIREBASE CONFIGURATION VIA ENVIRONMENT VARIABLES
+// ====================================================================================
+// Your web app's Firebase configuration is sourced from environment variables.
+// These variables (e.g., NEXT_PUBLIC_FIREBASE_API_KEY) MUST be defined in a .env file
+// (e.g., .env or .env.local) located at the ROOT of your project.
+//
+// Example .env file content:
+// NEXT_PUBLIC_FIREBASE_API_KEY="AIzaSyXXXXXXXXXXXXXXXXXXXXXX"
+// NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your-project-id.firebaseapp.com"
+// NEXT_PUBLIC_FIREBASE_PROJECT_ID="your-project-id"
+// // ... and so on for all Firebase config keys.
+//
+// !!! VERY IMPORTANT: After creating or modifying your .env file,
+// YOU MUST COMPLETELY STOP AND RESTART YOUR NEXT.JS DEVELOPMENT SERVER
+// for changes to take effect. (Stop the server with Ctrl+C and run `npm run dev` or `yarn dev` again).
+// ====================================================================================
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -17,12 +34,13 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Check if the API key is loaded correctly
-if (!firebaseConfig.apiKey || firebaseConfig.apiKey.trim() === "") {
-  const errorMessage = "CRITICAL_CONFIG_ERROR: Firebase API Key (NEXT_PUBLIC_FIREBASE_API_KEY) is missing, empty, or invalid in your environment. " +
-    "Firebase SDK cannot initialize. Please ensure this variable is correctly set in your .env file " +
-    "(e.g., .env.local or .env) at the root of your project, and that you have RESTARTED your Next.js development server. " +
-    `The value for apiKey appears to start with: '${String(firebaseConfig.apiKey).substring(0, 5)}...'`;
+// Check if the API key is loaded correctly. This check runs on both server and client.
+if (!firebaseConfig.apiKey || String(firebaseConfig.apiKey).trim() === "" || firebaseConfig.apiKey === "undefined") {
+  const errorMessage = `CRITICAL_CONFIG_ERROR: Firebase API Key (NEXT_PUBLIC_FIREBASE_API_KEY) is MISSING or UNDEFINED in your environment.
+    Firebase SDK cannot initialize.
+    1. CHECK YOUR .env FILE: Ensure it's at the project root and all NEXT_PUBLIC_FIREBASE_... variables are correctly set.
+    2. RESTART YOUR SERVER: You MUST restart your Next.js development server after any .env file changes.
+    Current apiKey value starts with: '${String(firebaseConfig.apiKey).substring(0, 5)}...' (should not be 'undef' or empty).`;
   
   console.error(errorMessage);
 
@@ -32,7 +50,11 @@ if (!firebaseConfig.apiKey || firebaseConfig.apiKey.trim() === "") {
     throw new Error(errorMessage);
   }
   // For client-side, the console.error might be sufficient, or you could implement
-  // a UI to show this critical error.
+  // a UI to show this critical error. We re-throw here to halt execution if on client.
+  // This ensures the error is prominently displayed if console is missed.
+  else {
+     throw new Error(errorMessage);
+  }
 }
 
 // Initialize Firebase
@@ -48,9 +70,13 @@ let analyticsInstance: Analytics | undefined;
 // Conditionally initialize Firebase Analytics only on the client-side
 if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
   import('firebase/analytics').then(({ getAnalytics }) => {
-    analyticsInstance = getAnalytics(app);
+    try {
+      analyticsInstance = getAnalytics(app);
+    } catch (err) {
+      console.error("Error initializing Firebase Analytics on client:", err);
+    }
   }).catch(err => {
-    console.error("Error initializing Firebase Analytics:", err);
+    console.error("Error dynamically importing Firebase Analytics:", err);
   });
 }
 

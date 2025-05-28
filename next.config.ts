@@ -19,6 +19,19 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // ====================================================================================
+  // ENVIRONMENT VARIABLES FOR CLIENT-SIDE ACCESS
+  // ====================================================================================
+  // This `env` block makes server-side environment variables (loaded by Next.js from
+  // your .env file into `process.env`) available in the client-side JavaScript bundle.
+  //
+  // For these to work, the corresponding `process.env.NEXT_PUBLIC_...` variables
+  // MUST be correctly defined in your .env file (at the project root) AND your
+  // Next.js development server MUST be restarted after any .env file changes.
+  //
+  // If `process.env.NEXT_PUBLIC_FIREBASE_API_KEY` (for example) is `undefined` on the
+  // server when this config is processed, it will also be `undefined` on the client.
+  // ====================================================================================
   env: {
     NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
