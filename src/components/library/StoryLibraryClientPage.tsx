@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import StoryCard from "@/components/story/StoryCard";
-import { storyGrades, storySubjects, storyLanguages } from "@/lib/dummy-data"; // Keep for filter dropdowns
+import { storyGrades, storySubjects, storyLanguages, dummyStories } from "@/lib/dummy-data"; // Added dummyStories import
 import type { Story } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { Search, FilterX, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy, Timestamp } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast"; // Added missing useToast import
 
 const ALL_FILTER_VALUE = "_all_";
 
@@ -23,6 +24,7 @@ export default function StoryLibraryClientPage() {
   const [languageFilter, setLanguageFilter] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast(); // Initialize toast
 
   useEffect(() => {
     async function fetchStories() {
@@ -33,32 +35,38 @@ export default function StoryLibraryClientPage() {
         const querySnapshot = await getDocs(q);
         const fetchedStories: Story[] = querySnapshot.docs.map(doc => {
           const data = doc.data();
-          // Convert Firestore Timestamp to ISO string for client-side compatibility
           const createdAt = data.createdAt instanceof Timestamp 
                             ? data.createdAt.toDate().toISOString() 
-                            : new Date().toISOString(); // Fallback if not a timestamp
+                            : new Date().toISOString(); 
           return {
             id: doc.id,
             ...data,
             createdAt,
           } as Story;
         });
-        setAllStories(fetchedStories);
+
+        if (fetchedStories.length > 0) {
+          setAllStories(fetchedStories);
+        } else {
+          // If Firestore is empty, use dummy stories as a fallback
+          console.log("No stories found in Firestore, using dummy stories.");
+          setAllStories(dummyStories);
+        }
       } catch (error) {
         console.error("Error fetching stories from Firestore:", error);
         toast({
           variant: "destructive",
           title: "Error Loading Stories",
-          description: "Could not fetch stories from the library. Please try again later.",
+          description: "Could not fetch stories. Displaying placeholder stories instead.",
         });
-        // Optionally, set allStories to an empty array or keep dummy data as fallback
-        setAllStories([]); 
+        // Fallback to dummy stories on error
+        setAllStories(dummyStories); 
       } finally {
         setIsLoading(false);
       }
     }
     fetchStories();
-  }, []);
+  }, [toast]); // Added toast to dependency array as it's used in the effect
 
   useEffect(() => {
     if (isLoading) return; 
@@ -91,10 +99,6 @@ export default function StoryLibraryClientPage() {
     setSearchTerm("");
   };
   
-  // Toast import is missing, let's add it
-  const { toast } = (typeof window !== 'undefined' && require('@/hooks/use-toast')) || { toast: () => {} };
-
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -173,7 +177,7 @@ export default function StoryLibraryClientPage() {
             <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <CardTitle className="text-xl">No Stories Found</CardTitle>
             <CardDescription className="mt-2">
-              Try adjusting your search or filters, or create a new story!
+              Try adjusting your search or filters.
             </CardDescription>
             {(gradeFilter || subjectFilter || languageFilter || searchTerm) && (
                 <Button onClick={resetFilters} variant="link" className="mt-4">
@@ -186,3 +190,5 @@ export default function StoryLibraryClientPage() {
     </div>
   );
 }
+
+    
