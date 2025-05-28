@@ -11,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Search, FilterX } from "lucide-react";
 import { Button } from "../ui/button";
 
+const ALL_FILTER_VALUE = "_all_";
+
 export default function StoryLibraryClientPage() {
   const [stories, setStories] = useState<Story[]>(dummyStories);
   const [filteredStories, setFilteredStories] = useState<Story[]>(dummyStories);
@@ -66,24 +68,33 @@ export default function StoryLibraryClientPage() {
                 className="pl-10 bg-background/70"
               />
             </div>
-            <Select value={gradeFilter} onValueChange={setGradeFilter}>
+            <Select 
+              value={gradeFilter} 
+              onValueChange={(value) => setGradeFilter(value === ALL_FILTER_VALUE ? "" : value)}
+            >
               <SelectTrigger className="bg-background/70"><SelectValue placeholder="Filter by Grade" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Grades</SelectItem>
+                <SelectItem key="all-grades-option" value={ALL_FILTER_VALUE}>All Grades</SelectItem>
                 {storyGrades.map(grade => <SelectItem key={grade} value={grade}>{grade}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+            <Select 
+              value={subjectFilter} 
+              onValueChange={(value) => setSubjectFilter(value === ALL_FILTER_VALUE ? "" : value)}
+            >
               <SelectTrigger className="bg-background/70"><SelectValue placeholder="Filter by Subject" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Subjects</SelectItem>
+                <SelectItem key="all-subjects-option" value={ALL_FILTER_VALUE}>All Subjects</SelectItem>
                 {storySubjects.map(subject => <SelectItem key={subject} value={subject}>{subject}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={languageFilter} onValueChange={setLanguageFilter}>
+            <Select 
+              value={languageFilter} 
+              onValueChange={(value) => setLanguageFilter(value === ALL_FILTER_VALUE ? "" : value)}
+            >
               <SelectTrigger className="bg-background/70"><SelectValue placeholder="Filter by Language" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Languages</SelectItem>
+                <SelectItem key="all-languages-option" value={ALL_FILTER_VALUE}>All Languages</SelectItem>
                 {storyLanguages.map(lang => <SelectItem key={lang} value={lang}>{lang}</SelectItem>)}
               </SelectContent>
             </Select>
