@@ -17,7 +17,7 @@ export default function HomePage() {
           height={600}
           className="mb-6 mx-auto"
         />
-        <h4 className="text-5xl font-bold tracking-tight text-foreground max-w-[500px] mx-auto">
+        <h4 className="text-2xl font-bold tracking-tight text-foreground max-w-[500px] mx-auto">
           Empowering young minds to learn, imagine, and grow through AI-powered storytelling and exploration.
         </h4>
         <p className="text-xl text-muted-foreground mt-3 max-w-xl mx-auto">
@@ -29,7 +29,7 @@ export default function HomePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
         <Card
           style={{ backgroundColor: '#6EA719' }}
-          className="shadow-xl flex flex-col text-white bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80"
+          className="shadow-xl flex flex-col text-white bg-card/90 backdrop-blur-sm supports-[backdrop-filter]:bg-card/90"
         >
           <CardHeader className="items-center text-center">
             <Pencil className="w-10 h-10 mb-3 text-white" />
@@ -54,7 +54,7 @@ export default function HomePage() {
 
         <Card
           style={{ backgroundColor: '#FFC60B' }}
-          className="shadow-xl flex flex-col text-white bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80"
+          className="shadow-xl flex flex-col text-white bg-card/90 backdrop-blur-sm supports-[backdrop-filter]:bg-card/90"
         >
           <CardHeader className="items-center text-center">
             <MessageSquareText className="w-10 h-10 mb-3 text-white" />
@@ -79,7 +79,7 @@ export default function HomePage() {
 
         <Card
           style={{ backgroundColor: '#A8218E' }}
-          className="shadow-xl flex flex-col text-white bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80"
+          className="shadow-xl flex flex-col text-white bg-card/90 backdrop-blur-sm supports-[backdrop-filter]:bg-card/90"
         >
           <CardHeader className="items-center text-center">
             <BookOpen className="w-10 h-10 mb-3 text-white" />
