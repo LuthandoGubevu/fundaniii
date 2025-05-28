@@ -25,16 +25,16 @@ export default function HomePage() {
           className="shadow-xl flex flex-col text-white"
         >
           <CardHeader className="items-center text-center">
-            <Zap className="w-10 h-10 mb-3" /> {/* Will inherit text-white */}
-            <CardTitle className="text-2xl font-semibold">Start a Story</CardTitle> {/* Will inherit text-white */}
-            <CardDescription className="pt-1 min-h-[3em]"> {/* Will inherit text-white */}
+            <Zap className="w-10 h-10 mb-3" /> {/* Inherits text-white from Card */}
+            <CardTitle className="text-2xl font-semibold">Start a Story</CardTitle> {/* Inherits text-white from Card */}
+            <CardDescription className="pt-1 min-h-[3em] text-white"> {/* Explicitly set text-white */}
               Unleash your creativity and begin crafting your own unique tales with AI assistance.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-grow flex flex-col justify-end">
             <Button asChild size="lg" className="shadow-md hover:shadow-lg transition-shadow w-full mt-auto">
               <Link href="/create-story">
-                <PlayCircle className="mr-2 h-5 w-5" /> {/* Primary button text is light, icon will match */}
+                <PlayCircle className="mr-2 h-5 w-5" /> {/* Uses primary-foreground (white) */}
                 Create Now
               </Link>
             </Button>
@@ -43,20 +43,19 @@ export default function HomePage() {
 
         <Card 
           style={{ backgroundColor: '#F7EB32' }} 
-          className="shadow-xl flex flex-col text-white" // Note: White text on yellow has low contrast
+          className="shadow-xl flex flex-col text-white" 
         >
           <CardHeader className="items-center text-center">
-            <MessageSquareText className="w-10 h-10 mb-3" /> {/* Will inherit text-white */}
-            <CardTitle className="text-2xl font-semibold">Ask for Help</CardTitle> {/* Will inherit text-white */}
-            <CardDescription className="pt-1 min-h-[3em]"> {/* Will inherit text-white */}
+            <MessageSquareText className="w-10 h-10 mb-3" /> {/* Inherits text-white from Card */}
+            <CardTitle className="text-2xl font-semibold">Ask for Help</CardTitle> {/* Inherits text-white from Card */}
+            <CardDescription className="pt-1 min-h-[3em] text-white"> {/* Explicitly set text-white */}
               Get kid-friendly answers to your school questions from our helpful AI companion.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-grow flex flex-col justify-end">
-            {/* Secondary button needs explicit text-white as its default text-secondary-foreground is dark */}
             <Button asChild variant="secondary" size="lg" className="shadow-md hover:shadow-lg transition-shadow w-full mt-auto text-white hover:bg-secondary/90">
               <Link href="/ask-question">
-                <HelpCircle className="mr-2 h-5 w-5" /> {/* Will use text-white from button */}
+                <HelpCircle className="mr-2 h-5 w-5" /> {/* Uses text-white from Button class */}
                 Ask Question
               </Link>
             </Button>
@@ -68,14 +67,13 @@ export default function HomePage() {
           className="shadow-xl flex flex-col text-white"
         >
           <CardHeader className="items-center text-center">
-            <BookOpen className="w-10 h-10 mb-3" /> {/* Will inherit text-white */}
-            <CardTitle className="text-2xl font-semibold">View Library</CardTitle> {/* Will inherit text-white */}
-            <CardDescription className="pt-1 min-h-[3em]"> {/* Will inherit text-white */}
+            <BookOpen className="w-10 h-10 mb-3" /> {/* Inherits text-white from Card */}
+            <CardTitle className="text-2xl font-semibold">View Library</CardTitle> {/* Inherits text-white from Card */}
+            <CardDescription className="pt-1 min-h-[3em] text-white"> {/* Explicitly set text-white */}
               Explore a collection of stories created by fellow learners and discover new adventures.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-grow flex flex-col justify-end">
-            {/* Outline button needs explicit text-white, border-white and hover states */}
             <Button 
               asChild 
               variant="outline" 
@@ -83,7 +81,7 @@ export default function HomePage() {
               className="shadow-md hover:shadow-lg transition-shadow w-full mt-auto border-white text-white hover:bg-white/20 hover:text-white"
             >
               <Link href="/story-library">
-                <Library className="mr-2 h-5 w-5" /> {/* Will use text-white from button */}
+                <Library className="mr-2 h-5 w-5" /> {/* Uses text-white from Button class */}
                 Browse Stories
               </Link>
             </Button>
