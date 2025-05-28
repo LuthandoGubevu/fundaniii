@@ -12,17 +12,39 @@ import { Search, FilterX } from "lucide-react";
 import { Button } from "../ui/button";
 
 const ALL_FILTER_VALUE = "_all_";
+const LOCAL_STORAGE_STORIES_KEY = 'fundaniiUserStories';
 
 export default function StoryLibraryClientPage() {
-  const [stories, setStories] = useState<Story[]>(dummyStories);
-  const [filteredStories, setFilteredStories] = useState<Story[]>(dummyStories);
+  const [allStories, setAllStories] = useState<Story[]>([]);
+  const [filteredStories, setFilteredStories] = useState<Story[]>([]);
   const [gradeFilter, setGradeFilter] = useState<string>("");
   const [subjectFilter, setSubjectFilter] = useState<string>("");
   const [languageFilter, setLanguageFilter] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let currentStories = [...stories];
+    // Load stories from localStorage and merge with dummyStories
+    const storedStoriesString = localStorage.getItem(LOCAL_STORAGE_STORIES_KEY);
+    const localUserStories: Story[] = storedStoriesString ? JSON.parse(storedStoriesString) : [];
+    
+    // Combine and remove duplicates (dummyStories first, then user stories, preferring user story if ID conflict)
+    const combinedStories = [...dummyStories];
+    const dummyStoryIds = new Set(dummyStories.map(s => s.id));
+    localUserStories.forEach(userStory => {
+      if (!dummyStoryIds.has(userStory.id)) {
+        combinedStories.unshift(userStory); // Add new user stories to the beginning
+      }
+    });
+
+    setAllStories(combinedStories);
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (isLoading) return; // Don't filter until stories are loaded
+
+    let currentStories = [...allStories];
 
     if (gradeFilter) {
       currentStories = currentStories.filter(story => story.grade === gradeFilter);
@@ -36,12 +58,12 @@ export default function StoryLibraryClientPage() {
     if (searchTerm) {
       currentStories = currentStories.filter(story => 
         story.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        story.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (story.content && story.content.toLowerCase().includes(searchTerm.toLowerCase())) || // check if content exists
         story.author.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     setFilteredStories(currentStories);
-  }, [gradeFilter, subjectFilter, languageFilter, searchTerm, stories]);
+  }, [gradeFilter, subjectFilter, languageFilter, searchTerm, allStories, isLoading]);
 
   const resetFilters = () => {
     setGradeFilter("");
@@ -49,6 +71,15 @@ export default function StoryLibraryClientPage() {
     setLanguageFilter("");
     setSearchTerm("");
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-4 text-lg text-muted-foreground">Loading stories...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 w-full max-w-5xl mx-auto">

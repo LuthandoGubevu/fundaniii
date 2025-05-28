@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -15,12 +16,14 @@ import { useToast } from "@/hooks/use-toast";
 import { storyAssistance, StoryAssistanceInput, StoryAssistanceOutput } from "@/ai/flows/ai-story-guide";
 import { translateStory, TranslateStoryInput, TranslateStoryOutput } from "@/ai/flows/ai-translator";
 import { generateStoryImage, GenerateStoryImageInput, GenerateStoryImageOutput } from "@/ai/flows/generate-story-image-flow";
-import { storyThemes, storyLanguages } from "@/lib/dummy-data";
-import { Loader2, Wand2, LanguagesIcon, Image as ImageIcon, Share2 } from "lucide-react";
+import { storyThemes, storyLanguages, storyGrades, storySubjects } from "@/lib/dummy-data";
+import type { Story } from "@/lib/types";
+import { auth } from "@/lib/firebase";
+import { Loader2, Wand2, LanguagesIcon, Image as ImageIcon, Share2, BookPlus } from "lucide-react";
 import Image from "next/image";
 
 const storyFormSchema = z.object({
-  storyText: z.string().min(10, { message: "Your story needs to be a bit longer!" }),
+  storyText: z.string().min(10, { message: "Your story idea needs to be a bit longer!" }),
   theme: z.string().optional(),
 });
 
@@ -32,12 +35,19 @@ const pageContentSchema = z.object({
   firstPageText: z.string().min(10, { message: "Please describe the first page scene (min 10 characters)."}),
 });
 
+const storyDetailsSchema = z.object({
+  title: z.string().min(3, { message: "Story title must be at least 3 characters." }),
+  grade: z.string().min(1, { message: "Please select a grade." }),
+  subject: z.string().min(1, { message: "Please select a subject." }),
+  language: z.string().min(1, { message: "Please select a language." }),
+});
+
 export default function CreateStoryClientPage() {
   const { toast } = useToast();
   const [isAssistanceLoading, startAssistanceTransition] = useTransition();
   const [isTranslationLoading, startTranslationTransition] = useTransition();
   const [isImageGenerating, startImageGenerationTransition] = useTransition();
-  const [isSharingLoading, startSharingTransition] = useTransition(); // For future use
+  const [isSharingLoading, startSharingTransition] = useTransition();
   
   const [aiSuggestions, setAiSuggestions] = useState<StoryAssistanceOutput | null>(null);
   const [translatedStory, setTranslatedStory] = useState<string | null>(null);
@@ -55,9 +65,12 @@ export default function CreateStoryClientPage() {
 
   const pageContentForm = useForm<z.infer<typeof pageContentSchema>>({
     resolver: zodResolver(pageContentSchema),
-    defaultValues: {
-      firstPageText: "",
-    },
+    defaultValues: { firstPageText: "" },
+  });
+
+  const storyDetailsForm = useForm<z.infer<typeof storyDetailsSchema>>({
+    resolver: zodResolver(storyDetailsSchema),
+    defaultValues: { title: "", grade: "", subject: "", language: "" },
   });
 
   async function onGetAssistance(values: z.infer<typeof storyFormSchema>) {
@@ -137,20 +150,54 @@ export default function CreateStoryClientPage() {
     });
   };
 
-  function handleShareToLibrary() {
-    // In a real app, you'd collect story data and send it to a backend
-    const pageText = pageContentForm.getValues("firstPageText");
-    if (!firstPageImageUrl || !pageText) {
-        toast({variant: "destructive", title: "Missing Content", description: "Image or text for the page is missing."});
+  async function onShareToLibrary(values: z.infer<typeof storyDetailsSchema>) {
+    const firstPageText = pageContentForm.getValues("firstPageText");
+    const theme = storyForm.getValues("theme");
+
+    if (!firstPageImageUrl || !firstPageText) {
+        toast({variant: "destructive", title: "Missing Content", description: "Image or text for the page is missing for sharing."});
         return;
     }
+
     startSharingTransition(async () => {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000)); 
+      try {
+        const authorName = auth.currentUser?.displayName || auth.currentUser?.email || "Anonymous Learner";
+        
+        const newStory: Story = {
+          id: Date.now().toString(), // Simple unique ID
+          title: values.title,
+          content: firstPageText, // Using first page text as main content for now
+          author: authorName,
+          grade: values.grade,
+          subject: values.subject,
+          language: values.language,
+          theme: theme || "General",
+          imageUrl: firstPageImageUrl,
+          createdAt: new Date().toISOString(),
+        };
+
+        // Save to localStorage
+        const existingStoriesString = localStorage.getItem('fundaniiUserStories');
+        const existingStories: Story[] = existingStoriesString ? JSON.parse(existingStoriesString) : [];
+        localStorage.setItem('fundaniiUserStories', JSON.stringify([newStory, ...existingStories]));
+
         toast({
-            title: "Sharing to Library...",
-            description: "This feature is coming soon! Your story page would be shared here.",
+            title: "Story Shared!",
+            description: "Your story has been added to the library for this session.",
         });
+
+        // Reset forms
+        storyForm.reset();
+        pageContentForm.reset();
+        storyDetailsForm.reset();
+        setAiSuggestions(null);
+        setFirstPageImageUrl(null);
+        setTranslatedStory(null);
+
+      } catch (error) {
+        console.error("Error sharing story:", error);
+        toast({ variant: "destructive", title: "Sharing Failed", description: "Could not share your story. Please try again." });
+      }
     });
   }
 
@@ -215,27 +262,28 @@ export default function CreateStoryClientPage() {
       </Card>
 
       {aiSuggestions && (
-        <>
-          <Card className="shadow-md bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
-            <CardHeader>
-              <CardTitle>AI Story Guide Suggestions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h4 className="font-semibold text-md">Structure Guidance:</h4>
-                <p className="text-muted-foreground">{aiSuggestions.structureGuidance}</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-md">Next Part Suggestions:</h4>
-                <ul className="list-disc list-inside text-muted-foreground">
-                  {aiSuggestions.suggestions.map((suggestion, index) => (
-                    <li key={index}>{suggestion}</li>
-                  ))}
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
+        <Card className="shadow-md bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
+          <CardHeader>
+            <CardTitle>AI Story Guide Suggestions</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h4 className="font-semibold text-md">Structure Guidance:</h4>
+              <p className="text-muted-foreground">{aiSuggestions.structureGuidance}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-md">Next Part Suggestions:</h4>
+              <ul className="list-disc list-inside text-muted-foreground">
+                {aiSuggestions.suggestions.map((suggestion, index) => (
+                  <li key={index}>{suggestion}</li>
+                ))}
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
+      {aiSuggestions && (
           <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
             <CardHeader>
               <CardTitle>Craft Your First Page</CardTitle>
@@ -243,7 +291,7 @@ export default function CreateStoryClientPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <Form {...pageContentForm}>
-                <form className="space-y-4">
+                <form className="space-y-4"> {/* No onSubmit needed here, button triggers manually */}
                   <FormField
                     control={pageContentForm.control}
                     name="firstPageText"
@@ -265,8 +313,8 @@ export default function CreateStoryClientPage() {
               </Form>
 
               <div>
-                <Label className="text-lg font-medium">Page 1 Illustration</Label>
-                <div className="mt-2 aspect-video w-full bg-muted/30 rounded-md flex items-center justify-center border border-dashed border-foreground/30 p-2">
+                <Label className="text-lg font-medium" htmlFor="page1-illustration">Page 1 Illustration</Label>
+                <div id="page1-illustration" className="mt-2 aspect-video w-full bg-muted/30 rounded-md flex items-center justify-center border border-dashed border-foreground/30 p-2">
                   {isImageGenerating ? (
                      <div className="flex flex-col items-center text-muted-foreground">
                         <Loader2 className="h-12 w-12 animate-spin text-primary mb-2" />
@@ -275,11 +323,11 @@ export default function CreateStoryClientPage() {
                   ) : firstPageImageUrl ? (
                     <Image
                       src={firstPageImageUrl}
-                      alt="Generated story illustration"
+                      alt="Generated story illustration for page 1"
                       width={400}
                       height={225}
                       className="rounded-md object-contain max-h-full"
-                      data-ai-hint="story illustration"
+                      data-ai-hint="story illustration child"
                     />
                   ) : (
                     <div className="text-center text-muted-foreground">
@@ -291,7 +339,7 @@ export default function CreateStoryClientPage() {
                 </div>
               </div>
 
-              <Button onClick={handleGetAiImage} variant="outline" size="lg" className="w-full bg-background/50" disabled={isImageGenerating}>
+              <Button onClick={handleGetAiImage} variant="outline" size="lg" className="w-full bg-background/50" disabled={isImageGenerating || isSharingLoading}>
                 {isImageGenerating ? (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 ) : (
@@ -301,46 +349,114 @@ export default function CreateStoryClientPage() {
               </Button>
             </CardContent>
           </Card>
-        </>
       )}
 
       {firstPageImageUrl && (
         <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
           <CardHeader>
-            <CardTitle>Your First Page Preview</CardTitle>
-            <CardDescription>Here's how your first page looks. You can share it to the library!</CardDescription>
+            <CardTitle className="text-2xl font-bold flex items-center">
+              <BookPlus className="mr-3 h-8 w-8 text-primary"/> Publish Story Details
+            </CardTitle>
+            <CardDescription>Review your first page, add some details, and share your masterpiece to the library!</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="aspect-video w-full bg-muted/30 rounded-md flex items-center justify-center border border-foreground/30 overflow-hidden">
-              <Image
-                src={firstPageImageUrl}
-                alt="Preview of generated story illustration"
-                width={600} 
-                height={338} 
-                className="object-contain w-full h-full"
-                data-ai-hint="story preview"
-              />
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-md mb-1">Page 1 Preview:</h4>
+                <div className="aspect-video w-full bg-muted/30 rounded-md flex items-center justify-center border border-foreground/30 overflow-hidden mb-2">
+                  <Image
+                    src={firstPageImageUrl}
+                    alt="Preview of generated story illustration"
+                    width={600} 
+                    height={338} 
+                    className="object-contain w-full h-full"
+                    data-ai-hint="story preview child"
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground bg-background/50 p-3 rounded-md whitespace-pre-wrap">
+                  {pageContentForm.getValues("firstPageText") || "No text entered for this page."}
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-semibold text-md mb-1">Page Text:</h4>
-              <p className="text-sm text-muted-foreground bg-background/50 p-3 rounded-md whitespace-pre-wrap">
-                {pageContentForm.getValues("firstPageText") || "No text entered for this page."}
-              </p>
-            </div>
+
+            <Form {...storyDetailsForm}>
+              <form onSubmit={storyDetailsForm.handleSubmit(onShareToLibrary)} className="space-y-4">
+                <FormField
+                  control={storyDetailsForm.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Story Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="My Awesome Adventure" {...field} className="bg-background/70"/>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <FormField
+                    control={storyDetailsForm.control}
+                    name="grade"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Grade</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl><SelectTrigger className="bg-background/70"><SelectValue placeholder="Select Grade" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {storyGrades.map(grade => <SelectItem key={grade} value={grade}>{grade}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={storyDetailsForm.control}
+                    name="subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subject</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl><SelectTrigger className="bg-background/70"><SelectValue placeholder="Select Subject" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {storySubjects.map(subject => <SelectItem key={subject} value={subject}>{subject}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={storyDetailsForm.control}
+                    name="language"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Language</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl><SelectTrigger className="bg-background/70"><SelectValue placeholder="Select Language" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {storyLanguages.map(lang => <SelectItem key={lang} value={lang}>{lang}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                 <Button type="submit" className="w-full" disabled={isSharingLoading || isImageGenerating}>
+                  {isSharingLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Share2 className="mr-2 h-4 w-4" />
+                  )}
+                  Share to Library
+                </Button>
+              </form>
+            </Form>
           </CardContent>
-          <CardFooter>
-            <Button onClick={handleShareToLibrary} className="w-full" disabled={isSharingLoading}>
-              {isSharingLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Share2 className="mr-2 h-4 w-4" />
-              )}
-              Share to Library (Coming Soon)
-            </Button>
-          </CardFooter>
         </Card>
       )}
-
 
       <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
         <CardHeader>
@@ -373,7 +489,7 @@ export default function CreateStoryClientPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={isTranslationLoading || isImageGenerating} className="w-full md:w-auto">
+                <Button type="submit" disabled={isTranslationLoading || isImageGenerating || isSharingLoading} className="w-full md:w-auto">
                   {isTranslationLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <LanguagesIcon className="mr-2 h-4 w-4" /> Translate Story
                 </Button>
@@ -388,12 +504,6 @@ export default function CreateStoryClientPage() {
           )}
         </CardContent>
       </Card>
-      
     </div>
   );
 }
-
-
-    
-
-    
