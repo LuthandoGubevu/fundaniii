@@ -35,6 +35,8 @@ export default function RootLayout({
           <div className="cloud two"></div>
           <div className="cloud three"></div>
           <div className="landscape">
+            <div className="mountain distant"></div>
+            <div className="mountain mid"></div>
             <div className="hill one"></div>
             <div className="hill two"></div>
             <div className="hill three"></div>
@@ -55,14 +57,14 @@ export default function RootLayout({
               {/* Mobile Header with Sidebar Trigger */}
               <header className="sticky top-0 z-40 md:hidden flex items-center justify-between border-b bg-background/30 backdrop-blur supports-[backdrop-filter]:bg-background/20 p-4 h-16">
                  <Link href="/" className="flex items-center space-x-2">
-                    <Image 
-                      src="/logo.png" 
-                      alt="Fundanii Ai Logo" 
-                      width={32} 
+                    <Image
+                      src="/logo.png"
+                      alt="Fundanii Ai Logo"
+                      width={32}
                       height={32}
-                      className="text-primary" 
+                      className="text-primary"
                     />
-                 </Link>                 
+                 </Link>
                  <SidebarTrigger /> {/* Mobile trigger */}
               </header>
               {/* Main content area. flex-1 makes it take remaining vertical space. items-center centers children horizontally. justify-center centers children vertically. */}
