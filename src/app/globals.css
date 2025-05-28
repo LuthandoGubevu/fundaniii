@@ -81,7 +81,7 @@ html {
 .sun {
   position: absolute;
   top: 8%;
-  left: 10%;
+  right: 10%; /* Changed from left to right */
   width: 80px;
   height: 80px;
   background-color: #FFD700; /* Gold */
