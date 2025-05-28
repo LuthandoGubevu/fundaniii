@@ -2,7 +2,8 @@
 "use client";
 
 import Link from "next/link";
-import { BookHeart, Home, MessageCircleQuestion, PlusSquare, Library, Settings } from "lucide-react";
+import Image from "next/image";
+import { Home, MessageCircleQuestion, PlusSquare, Library, Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
   SidebarHeader,
@@ -32,7 +33,13 @@ export function AppSidebar() {
       <SidebarHeader className="p-2">
         <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center space-x-2 p-2">
-                <BookHeart className="h-7 w-7 text-primary" />
+                <Image 
+                  src="/fundanii-logo-original.png" 
+                  alt="Fundanii Ai Logo" 
+                  width={32} 
+                  height={32} 
+                  className="text-primary" // Keep className in case of styling needs, though text-primary might not directly affect image
+                />
                 <span className="font-bold text-lg text-primary group-data-[collapsible=icon]:hidden">Fundanii Ai</span>
             </Link>
             {/* Desktop trigger - toggles between expanded and icon-only */}
@@ -72,3 +79,4 @@ export function AppSidebar() {
     </>
   );
 }
+

@@ -6,7 +6,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Toaster } from "@/components/ui/toaster";
 import { SidebarProvider, Sidebar, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { BookHeart } from "lucide-react";
+import Image from "next/image";
 
 
 export const metadata: Metadata = {
@@ -55,15 +55,20 @@ export default function RootLayout({
               {/* Mobile Header with Sidebar Trigger */}
               <header className="sticky top-0 z-40 md:hidden flex items-center justify-between border-b bg-background/30 backdrop-blur supports-[backdrop-filter]:bg-background/20 p-4 h-16">
                  <Link href="/" className="flex items-center space-x-2">
-                    <BookHeart className="h-7 w-7 text-primary" />
+                    <Image 
+                      src="/fundanii-logo-original.png" 
+                      alt="Fundanii Ai Logo" 
+                      width={32} 
+                      height={32}
+                      className="text-primary" // Keep className, though text-primary might not directly affect image
+                    />
                     <span className="font-semibold text-lg text-primary">Fundanii Ai</span>
-                 </Link>
+                 </Link>                 
                  <SidebarTrigger /> {/* Mobile trigger */}
               </header>
               <main className="flex flex-1 flex-col items-center justify-center container max-w-screen-lg mx-auto py-8 px-4">
                 {children}
               </main>
-              {/* Footer has been removed */}
             </SidebarInset>
           </div>
         </SidebarProvider>
@@ -72,3 +77,4 @@ export default function RootLayout({
     </html>
   );
 }
+
