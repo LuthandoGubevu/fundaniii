@@ -108,7 +108,7 @@ export default function CreateStoryClientPage() {
                     <FormLabel className="text-lg">Your Story</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Once upon a time..."
+                        placeholder="I want to create a story about..."
                         className="min-h-[200px] text-base resize-none bg-background/70"
                         {...field}
                       />
