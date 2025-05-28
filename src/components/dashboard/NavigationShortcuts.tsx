@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusSquare, MessageCircleQuestion, Library, BookOpen, Pencil, Palette } from "lucide-react";
 import Link from "next/link";
@@ -48,3 +48,4 @@ export default function NavigationShortcuts() {
     </div>
   );
 }
+
