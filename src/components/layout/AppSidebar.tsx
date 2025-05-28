@@ -3,8 +3,11 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Home, MessageCircleQuestion, PlusSquare, Library, Settings } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { Home, MessageCircleQuestion, PlusSquare, Library, Settings, LogOut } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
 import {
   SidebarHeader,
   SidebarTrigger,
@@ -15,6 +18,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button"; // Added for styling consistency if needed, though SidebarMenuButton is primary here
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -25,10 +29,28 @@ const navItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: "Signed Out",
+        description: "You have been successfully signed out.",
+      });
+      router.push("/auth/signin");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      toast({
+        variant: "destructive",
+        title: "Sign Out Failed",
+        description: "Could not sign out. Please try again.",
+      });
+    }
+  };
 
   return (
-    // Sidebar component is part of SidebarProvider in layout.tsx
-    // This component defines the content of the sidebar
     <>
       <SidebarHeader className="p-2">
         <div className="flex items-center justify-between">
@@ -38,11 +60,9 @@ export function AppSidebar() {
                   alt="Fundanii Ai Logo" 
                   width={32} 
                   height={32} 
-                  className="text-primary" // Keep className in case of styling needs, though text-primary might not directly affect image
+                  className="text-primary"
                 />
-                {/* Removed Fundanii Ai text span here */}
             </Link>
-            {/* Desktop trigger - toggles between expanded and icon-only */}
             <SidebarTrigger className="hidden md:flex" />
         </div>
       </SidebarHeader>
@@ -72,6 +92,15 @@ export function AppSidebar() {
                 >
                     <Settings/>
                     <span>Settings</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+                <SidebarMenuButton
+                    onClick={handleSignOut}
+                    tooltip={{ children: "Log Out", side: "right", align: "center" }}
+                >
+                    <LogOut />
+                    <span>Log Out</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>
