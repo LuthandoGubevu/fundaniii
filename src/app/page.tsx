@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlayCircle, HelpCircle, Library, Zap, MessageSquareText, BookOpen } from "lucide-react";
+import { PlayCircle, HelpCircle, Library, Pencil, MessageSquareText, BookOpen } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -32,7 +32,7 @@ export default function HomePage() {
           className="shadow-xl flex flex-col text-white bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80"
         >
           <CardHeader className="items-center text-center">
-            <Zap className="w-10 h-10 mb-3" /> {/* Inherits text-white from Card */}
+            <Pencil className="w-10 h-10 mb-3" /> {/* Inherits text-white from Card */}
             <CardTitle className="text-2xl font-semibold">Start a Story</CardTitle> {/* Inherits text-white from Card */}
             <CardDescription className="pt-1 min-h-[3em] text-white"> {/* Explicitly set text-white */}
               Unleash your creativity and begin crafting your own unique tales with AI assistance.
