@@ -1,15 +1,22 @@
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlayCircle, HelpCircle, Library, BookHeart, Zap, MessageSquareText, BookOpen } from "lucide-react";
+import { PlayCircle, HelpCircle, Library, Zap, MessageSquareText, BookOpen } from "lucide-react";
 
 export default function HomePage() {
   return (
     <div className="flex w-full flex-col items-center">
       {/* Title and Description */}
       <div className="mb-12 text-center">
-        <BookHeart className="w-20 h-20 text-primary mb-6 mx-auto" />
+        <Image
+          src="/fundanii-logo-original.png"
+          alt="Fundanii Ai Logo"
+          width={80}
+          height={80}
+          className="mb-6 mx-auto"
+        />
         <h1 className="text-5xl font-bold tracking-tight text-foreground">
           Welcome to Fundanii Ai!
         </h1>
