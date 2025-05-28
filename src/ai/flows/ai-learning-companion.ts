@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -13,6 +14,7 @@ import {z} from 'genkit';
 
 const AiLearningCompanionInputSchema = z.object({
   question: z.string().describe('The question asked by the student.'),
+  subject: z.string().optional().describe('The subject the question relates to.'),
 });
 export type AiLearningCompanionInput = z.infer<typeof AiLearningCompanionInputSchema>;
 
@@ -29,7 +31,14 @@ const prompt = ai.definePrompt({
   name: 'aiLearningCompanionPrompt',
   input: {schema: AiLearningCompanionInputSchema},
   output: {schema: AiLearningCompanionOutputSchema},
-  prompt: `You are a friendly AI learning companion for students aged 7-15.  Provide kid-friendly explanations and examples for the following question:\n\nQuestion: {{{question}}}`,
+  prompt: `You are a friendly and encouraging AI learning companion for students aged 7-15.
+{{#if subject}}
+The student is asking a question related to the subject: {{{subject}}}.
+{{/if}}
+Provide clear, kid-friendly explanations and examples for the following question. Use simple language and analogies where possible. If appropriate, you can include an emoji to make it more engaging.
+Question: {{{question}}}
+
+Answer:`,
 });
 
 const aiLearningCompanionFlow = ai.defineFlow(

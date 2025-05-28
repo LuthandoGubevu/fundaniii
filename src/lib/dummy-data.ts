@@ -1,6 +1,6 @@
 
-import type { Story, UserProfile, Mood, DashboardStoryItem, Achievement, DailyPrompt, FeaturedStory } from "./types";
-import { BookOpenCheck, Edit3, CheckCircle, Award, Star, ThumbsUp, MessageCircle, Pencil, Lightbulb, Zap, BookHeart, Users, Languages, Image as ImageIconLucide, Wand2, Rocket, Palette, Globe, Brain } from "lucide-react";
+import type { Story, UserProfile, Mood, DashboardStoryItem, Achievement, DailyPrompt, FeaturedStory, SubjectItem } from "./types";
+import { BookOpenCheck, Edit3, CheckCircle, Award, Star, ThumbsUp, MessageCircle, Pencil, Lightbulb, Zap, BookHeart, Users, Languages, Image as ImageIconLucide, Wand2, Rocket, Palette, Globe, Brain, BookText, Sigma, FlaskConical, HeartHandshake, Sparkles } from "lucide-react";
 
 export const dummyStories: Story[] = [
   {
@@ -13,7 +13,7 @@ export const dummyStories: Story[] = [
     subject: "Life Skills",
     language: "English",
     theme: "Nature",
-    imageUrl: "https://placehold.co/300x200.png?text=Magical+Baobab",
+    imageUrl: "https://placehold.co/600x400.png?text=Magical+Baobab",
     createdAt: new Date(2023, 10, 15).toISOString(),
     status: 'Published',
     upvotes: 15,
@@ -28,7 +28,7 @@ export const dummyStories: Story[] = [
     subject: "Science",
     language: "English",
     theme: "Adventure",
-    imageUrl: "https://placehold.co/300x200.png?text=Space+Adventure",
+    imageUrl: "https://placehold.co/600x400.png?text=Space+Adventure",
     createdAt: new Date(2023, 11, 2).toISOString(),
     status: 'Published',
     upvotes: 22,
@@ -43,7 +43,7 @@ export const dummyStories: Story[] = [
     subject: "Languages",
     language: "isiXhosa",
     theme: "Culture",
-    imageUrl: "https://placehold.co/300x200.png?text=Nomsa's+Journey",
+    imageUrl: "https://placehold.co/600x400.png?text=Nomsa's+Journey",
     createdAt: new Date(2024, 0, 10).toISOString(),
     status: 'Published',
     upvotes: 10,
@@ -58,7 +58,7 @@ export const dummyStories: Story[] = [
     subject: "Life Orientation",
     language: "English",
     theme: "Friendship",
-    imageUrl: "https://placehold.co/300x200.png?text=Tortoise+Lion",
+    imageUrl: "https://placehold.co/600x400.png?text=Tortoise+Lion",
     createdAt: new Date(2024, 1, 5).toISOString(),
     status: 'Published',
     upvotes: 18,
@@ -73,7 +73,7 @@ export const dummyStories: Story[] = [
     subject: "Languages",
     language: "Zulu",
     theme: "Life Skills",
-    imageUrl: "https://placehold.co/300x200.png?text=Themba+Rabbit",
+    imageUrl: "https://placehold.co/600x400.png?text=Themba+Rabbit",
     createdAt: new Date(2024, 2, 12).toISOString(),
     status: 'Published',
     upvotes: 9,
@@ -88,7 +88,7 @@ export const dummyStories: Story[] = [
     subject: "Science",
     language: "English",
     theme: "Science",
-    imageUrl: "https://placehold.co/300x200.png?text=My+Rocket",
+    imageUrl: "https://placehold.co/600x400.png?text=My+Rocket",
     createdAt: new Date(2024, 3, 1).toISOString(),
     status: 'Published',
     upvotes: 30,
@@ -103,7 +103,7 @@ export const dummyStories: Story[] = [
     subject: "Arts & Culture",
     language: "English",
     theme: "Imagination",
-    imageUrl: "https://placehold.co/300x200.png?text=Singing+Zebra",
+    imageUrl: "https://placehold.co/600x400.png?text=Singing+Zebra",
     createdAt: new Date(2024, 4, 10).toISOString(),
     status: 'Published',
     upvotes: 25,
@@ -118,7 +118,7 @@ export const dummyStories: Story[] = [
     subject: "Life Skills",
     language: "Swahili",
     theme: "Adventure",
-    imageUrl: "https://placehold.co/300x200.png?text=Lost+Chameleon",
+    imageUrl: "https://placehold.co/600x400.png?text=Lost+Chameleon",
     createdAt: new Date(2024, 5, 5).toISOString(),
     status: 'Published',
     upvotes: 12,
@@ -130,11 +130,8 @@ export const storyLanguages = ["English", "isiXhosa", "Zulu", "Swahili", "French
 export const storyGrades = ["Grade R", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
 export const storySubjects = ["Science", "Math", "English", "Life Orientation", "Languages", "Social Studies", "Arts & Culture", "Technology", "Natural Sciences", "Economic Management Sciences"];
 
-
-// --- New Dummy Data for Dashboard ---
-
 export const dummyUserProfile: UserProfile = {
-  name: "Lerato", // This will be updated by auth state
+  name: "Lerato", 
   avatarUrl: "https://placehold.co/100x100.png?text=User", 
   mood: { emoji: "😊", label: "Happy" },
 };
@@ -173,10 +170,10 @@ export const dummyAchievements: Achievement[] = [
 ];
 
 export const dummyFeaturedStories: FeaturedStory[] = [
-  dummyStories.find(s => s.id === "6") || dummyStories[0], // My Journey to the Stars
-  dummyStories.find(s => s.id === "7") || dummyStories[1], // The Singing Zebra
-  dummyStories.find(s => s.id === "2") || dummyStories[2], // Sipho's Space Adventure
-  dummyStories.find(s => s.id === "4") || dummyStories[3], // The Clever Tortoise
+  dummyStories.find(s => s.id === "6") || dummyStories[0], 
+  dummyStories.find(s => s.id === "7") || dummyStories[1], 
+  dummyStories.find(s => s.id === "2") || dummyStories[2], 
+  dummyStories.find(s => s.id === "4") || dummyStories[3], 
   { 
     id: "feat-5", 
     title: "The Girl Who Painted Dreams", 
@@ -192,4 +189,13 @@ export const dummyFeaturedStories: FeaturedStory[] = [
     status: "Published", 
     upvotes: 65 
   },
+];
+
+export const studySubjects: SubjectItem[] = [
+  { id: "english", name: "English / Language", icon: BookText },
+  { id: "maths", name: "Mathematics", icon: Sigma },
+  { id: "lifeskills", name: "Life Skills", icon: Users },
+  { id: "natsci", name: "Natural Sciences", icon: FlaskConical },
+  { id: "readwrite", name: "Reading & Writing", icon: BookOpen },
+  { id: "lifeori", name: "Life Orientation", icon: HeartHandshake },
 ];

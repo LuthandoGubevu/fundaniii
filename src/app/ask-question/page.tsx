@@ -1,8 +1,8 @@
 
-import AskQuestionClientPage from "@/components/qa/AskQuestionClientPage";
+import MyStudyBuddyClientPage from "@/components/qa/MyStudyBuddyClientPage";
 
-export default function AskQuestionPage() {
+export default function MyStudyBuddyPage() {
   return (
-     <AskQuestionClientPage />
+     <MyStudyBuddyClientPage />
   );
 }

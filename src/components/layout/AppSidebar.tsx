@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Home, MessageCircleQuestion, PlusSquare, Library, Settings, LogOut } from "lucide-react";
+import { Home, PlusSquare, Library, Settings, LogOut, Brain } from "lucide-react"; // Added Brain
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -18,12 +18,12 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button"; // Added for styling consistency if needed, though SidebarMenuButton is primary here
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/create-story", label: "Start a Story", icon: PlusSquare },
-  { href: "/ask-question", label: "Ask for Help", icon: MessageCircleQuestion },
+  { href: "/ask-question", label: "My Study Buddy", icon: Brain }, // Changed label and icon
   { href: "/story-library", label: "Story Library", icon: Library },
 ];
 
