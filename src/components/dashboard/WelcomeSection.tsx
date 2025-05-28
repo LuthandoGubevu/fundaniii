@@ -1,28 +1,21 @@
 
 "use client";
 
-import type { UserProfile, Mood } from "@/lib/types";
-import { dummyUserProfile, dummyMoods } from "@/lib/dummy-data";
+import type { UserProfile } from "@/lib/types";
+import { dummyUserProfile } from "@/lib/dummy-data";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
+// Button and DropdownMenu imports removed as they are no longer used for mood
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { auth, db } from "@/lib/firebase";
 import type { User } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, query, where, getDocs, onSnapshot, sum } from "firebase/firestore";
-import { Star, Heart } from "lucide-react"; // Added Heart
+import { collection, query, where, onSnapshot } from "firebase/firestore"; // Removed sum, as we'll sum manually
+import { Heart } from "lucide-react";
 
 export default function WelcomeSection() {
   const [user, setUser] = useState<UserProfile>(dummyUserProfile);
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
-  const [currentMood, setCurrentMood] = useState<Mood>(user.mood || dummyMoods[0]);
   const [totalLikes, setTotalLikes] = useState<number>(0);
 
   useEffect(() => {
@@ -36,7 +29,6 @@ export default function WelcomeSection() {
         }));
       } else {
         setUser(dummyUserProfile);
-        setCurrentMood(dummyUserProfile.mood || dummyMoods[0]);
         setTotalLikes(0); // Reset likes if user logs out
       }
     });
@@ -48,7 +40,6 @@ export default function WelcomeSection() {
       const storiesRef = collection(db, "stories");
       const q = query(storiesRef, where("authorId", "==", firebaseUser.uid));
 
-      // Use onSnapshot for real-time updates if desired, or getDocs for one-time fetch
       const unsubscribeLikes = onSnapshot(q, (querySnapshot) => {
         let likesSum = 0;
         querySnapshot.forEach((doc) => {
@@ -64,16 +55,6 @@ export default function WelcomeSection() {
       setTotalLikes(0);
     }
   }, [firebaseUser]);
-
-
-  useEffect(() => {
-    setCurrentMood(user.mood || dummyMoods[0]);
-  }, [user.mood]);
-
-  const handleMoodChange = (mood: Mood) => {
-    setCurrentMood(mood);
-    // console.log("Mood changed to:", mood.label); // Optional: for debugging
-  };
 
   return (
     <Card className="shadow-lg bg-gradient-to-br from-[#2D9CDB] to-[#70C1B3] text-primary-foreground border-primary/50 overflow-hidden">
@@ -97,28 +78,9 @@ export default function WelcomeSection() {
           </p>
         </div>
         <div className="flex flex-col items-center sm:items-end space-y-2">
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-4xl p-2 h-auto hover:bg-white/20 focus-visible:ring-white/50">
-                    {currentMood.emoji}
-                    <span className="sr-only">Current mood: {currentMood.label}</span>
-                </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-popover/95 backdrop-blur-sm text-popover-foreground">
-                {dummyMoods.map((mood) => (
-                    <DropdownMenuItem
-                    key={mood.label}
-                    onClick={() => handleMoodChange(mood)}
-                    className="text-2xl hover:bg-accent/10 cursor-pointer"
-                    >
-                    <span className="mr-2">{mood.emoji}</span>
-                    <span>{mood.label}</span>
-                    </DropdownMenuItem>
-                ))}
-                </DropdownMenuContent>
-            </DropdownMenu>
-             <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white/20 text-primary-foreground font-semibold text-sm">
-                <Heart className="h-5 w-5 fill-red-500 text-red-500" /> {/* Filled red heart */}
+            {/* Mood emoji DropdownMenu removed */}
+             <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-white/20 text-primary-foreground font-bold text-xl">
+                <Heart className="h-7 w-7 fill-red-500 text-red-500" />
                 <span>{totalLikes} Likes</span>
             </div>
         </div>
