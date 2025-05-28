@@ -10,10 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Label } from "@/components/ui/label"; // Added import for basic Label
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { storyAssistance, StoryAssistanceInput, StoryAssistanceOutput } from "@/ai/flows/ai-story-guide";
 import { translateStory, TranslateStoryInput, TranslateStoryOutput } from "@/ai/flows/ai-translator";
+import { generateStoryImage, GenerateStoryImageInput, GenerateStoryImageOutput } from "@/ai/flows/generate-story-image-flow";
 import { storyThemes, storyLanguages } from "@/lib/dummy-data";
 import { Loader2, Wand2, LanguagesIcon, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
@@ -28,13 +29,14 @@ const translateFormSchema = z.object({
 });
 
 const pageContentSchema = z.object({
-  firstPageText: z.string().optional(),
+  firstPageText: z.string().min(10, { message: "Please describe the first page scene (min 10 characters)."}),
 });
 
 export default function CreateStoryClientPage() {
   const { toast } = useToast();
   const [isAssistanceLoading, startAssistanceTransition] = useTransition();
   const [isTranslationLoading, startTranslationTransition] = useTransition();
+  const [isImageGenerating, startImageGenerationTransition] = useTransition();
   
   const [aiSuggestions, setAiSuggestions] = useState<StoryAssistanceOutput | null>(null);
   const [translatedStory, setTranslatedStory] = useState<string | null>(null);
@@ -97,17 +99,41 @@ export default function CreateStoryClientPage() {
     });
   }
   
-  const handleGetAiImage = () => {
-    // const pageText = pageContentForm.getValues("firstPageText");
-    // console.log("Page 1 Text for image generation:", pageText); 
-    toast({
-      title: "Feature Coming Soon!",
-      description: "The 'Get AI Image' feature is under development. Stay tuned!",
+  async function handleGetAiImage() {
+    const validationResult = pageContentForm.trigger("firstPageText");
+    if (!await validationResult || !pageContentForm.formState.isValid) {
+      toast({
+        variant: "destructive",
+        title: "Missing Text",
+        description: "Please write some text for Page 1 before generating an image.",
+      });
+      return;
+    }
+    const pageText = pageContentForm.getValues("firstPageText");
+
+    setFirstPageImageUrl(null); // Clear previous image / show loading state implicitly
+
+    startImageGenerationTransition(async () => {
+      try {
+        const imagePrompt = `A whimsical and vibrant children's storybook illustration for a story page. The scene depicts: ${pageText}. Ensure the style is friendly, colorful, and appropriate for young children.`;
+        const input: GenerateStoryImageInput = { prompt: imagePrompt };
+        const result: GenerateStoryImageOutput = await generateStoryImage(input);
+        setFirstPageImageUrl(result.imageDataUri);
+        toast({
+          title: "Image Generated!",
+          description: "Your AI illustration is ready.",
+        });
+      } catch (error) {
+        console.error("Error generating AI image:", error);
+        const errorMessage = error instanceof Error ? error.message : "Could not generate image. Please try again.";
+        toast({
+          variant: "destructive",
+          title: "Image Generation Failed",
+          description: errorMessage,
+        });
+        setFirstPageImageUrl(null); // Ensure placeholder is shown on error
+      }
     });
-    // In the future, you would call an AI image generation flow here
-    // and update setFirstPageImageUrl with the result.
-    // For now, let's simulate an image being set for testing:
-    // setFirstPageImageUrl("https://placehold.co/600x400.png"); 
   };
 
   return (
@@ -199,7 +225,7 @@ export default function CreateStoryClientPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <Form {...pageContentForm}>
-                <form className="space-y-4"> {/* Added a basic form wrapper, no submit needed for now */}
+                <form className="space-y-4">
                   <FormField
                     control={pageContentForm.control}
                     name="firstPageText"
@@ -221,9 +247,14 @@ export default function CreateStoryClientPage() {
               </Form>
 
               <div>
-                <Label className="text-lg font-medium">Page 1 Illustration</Label> {/* Changed from FormLabel to Label */}
+                <Label className="text-lg font-medium">Page 1 Illustration</Label>
                 <div className="mt-2 aspect-video w-full bg-muted/30 rounded-md flex items-center justify-center border border-dashed border-foreground/30 p-2">
-                  {firstPageImageUrl ? (
+                  {isImageGenerating ? (
+                     <div className="flex flex-col items-center text-muted-foreground">
+                        <Loader2 className="h-12 w-12 animate-spin text-primary mb-2" />
+                        <p>Generating your illustration...</p>
+                     </div>
+                  ) : firstPageImageUrl ? (
                     <Image
                       src={firstPageImageUrl}
                       alt="Generated story illustration"
@@ -236,13 +267,18 @@ export default function CreateStoryClientPage() {
                     <div className="text-center text-muted-foreground">
                       <ImageIcon className="mx-auto h-12 w-12 mb-2" />
                       <p>Your AI-generated image will appear here.</p>
+                      <p className="text-xs">(Write text above and click "Get AI Image")</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              <Button onClick={handleGetAiImage} variant="outline" size="lg" className="w-full bg-background/50">
-                <ImageIcon className="mr-2 h-5 w-5" />
+              <Button onClick={handleGetAiImage} variant="outline" size="lg" className="w-full bg-background/50" disabled={isImageGenerating}>
+                {isImageGenerating ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                  <ImageIcon className="mr-2 h-5 w-5" />
+                )}
                 Get AI Image 
               </Button>
             </CardContent>
@@ -281,7 +317,7 @@ export default function CreateStoryClientPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={isTranslationLoading} className="w-full md:w-auto">
+                <Button type="submit" disabled={isTranslationLoading || isImageGenerating} className="w-full md:w-auto">
                   {isTranslationLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <LanguagesIcon className="mr-2 h-4 w-4" /> Translate Story
                 </Button>
@@ -300,5 +336,3 @@ export default function CreateStoryClientPage() {
     </div>
   );
 }
-
-    
