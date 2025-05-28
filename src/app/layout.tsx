@@ -60,13 +60,13 @@ export default function RootLayout({
                       alt="Fundanii Ai Logo" 
                       width={32} 
                       height={32}
-                      className="text-primary" // Keep className, though text-primary might not directly affect image
+                      className="text-primary" 
                     />
-                    {/* Removed Fundanii Ai text span here */}
                  </Link>                 
                  <SidebarTrigger /> {/* Mobile trigger */}
               </header>
-              <main className="flex flex-1 flex-col items-center justify-center container max-w-screen-lg mx-auto py-8 px-4">
+              {/* Main content area. flex-1 makes it take remaining vertical space. items-center centers children horizontally. justify-center centers children vertically. */}
+              <main className="flex flex-1 flex-col items-center justify-center py-8 px-4">
                 {children}
               </main>
             </SidebarInset>
