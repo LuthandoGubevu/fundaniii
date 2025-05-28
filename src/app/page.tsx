@@ -46,7 +46,7 @@ export default function HomePage() {
         </Card>
 
         <Card
-          style={{ backgroundColor: '#D8C512' }}
+          style={{ backgroundColor: '#FFC60B' }}
           className="shadow-xl flex flex-col text-white bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80"
         >
           <CardHeader className="items-center text-center">
