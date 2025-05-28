@@ -13,8 +13,8 @@ export default function HomePage() {
         <Image
           src="/fundanii-logo-original.png"
           alt="Fundanii Ai Logo"
-          width={80}
-          height={80}
+          width={300}
+          height={300}
           className="mb-6 mx-auto"
         />
         <h1 className="text-5xl font-bold tracking-tight text-foreground">
