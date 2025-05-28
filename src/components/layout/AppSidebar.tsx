@@ -34,7 +34,7 @@ export function AppSidebar() {
         <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center space-x-2 p-2">
                 <Image 
-                  src="/fundanii-logo-original.png" 
+                  src="/logo.png" 
                   alt="Fundanii Ai Logo" 
                   width={32} 
                   height={32} 

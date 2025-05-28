@@ -56,7 +56,7 @@ export default function RootLayout({
               <header className="sticky top-0 z-40 md:hidden flex items-center justify-between border-b bg-background/30 backdrop-blur supports-[backdrop-filter]:bg-background/20 p-4 h-16">
                  <Link href="/" className="flex items-center space-x-2">
                     <Image 
-                      src="/fundanii-logo-original.png" 
+                      src="/logo.png" 
                       alt="Fundanii Ai Logo" 
                       width={32} 
                       height={32}
