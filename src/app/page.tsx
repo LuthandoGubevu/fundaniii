@@ -7,7 +7,7 @@ import { PlayCircle, HelpCircle, Library, Pencil, MessageSquareText, BookOpen } 
 
 export default function HomePage() {
   return (
-    <div className="flex w-full flex-col items-center">
+    <div className="flex flex-col items-center"> {/* Removed w-full */}
       {/* Title and Description */}
       <div className="mb-12 text-center">
         <Image
@@ -17,7 +17,7 @@ export default function HomePage() {
           height={600}
           className="mb-6 mx-auto"
         />
-        <h1 className="text-2xl font-bold tracking-tight text-foreground max-w-[500px] mx-auto">
+        <h1 className="text-5xl font-bold tracking-tight text-foreground max-w-[500px] mx-auto">
           Empowering young minds to learn, imagine, and grow through AI-powered storytelling and exploration.
         </h1>
         <p className="text-xl text-muted-foreground mt-3 max-w-xl mx-auto">
