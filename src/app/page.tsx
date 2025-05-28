@@ -6,7 +6,6 @@ import CreativeToolbox from "@/components/dashboard/CreativeToolbox";
 import AchievementsPanel from "@/components/dashboard/AchievementsPanel";
 import FeaturedStoryCarousel from "@/components/dashboard/FeaturedStoryCarousel";
 import LearningBuddyCorner from "@/components/dashboard/LearningBuddyCorner";
-import NavigationShortcuts from "@/components/dashboard/NavigationShortcuts";
 import { Separator } from "@/components/ui/separator";
 
 export default function DashboardPage() {
@@ -26,15 +25,6 @@ export default function DashboardPage() {
           <CreativeToolbox />
           <AchievementsPanel />
         </div>
-      </div>
-      
-      <Separator className="my-8 bg-primary/20"/>
-
-      {/* Navigation Shortcuts might be better integrated into a specific section or as a more compact element */}
-      {/* For now, placing them as their own section */}
-      <div>
-        <h3 className="text-2xl font-bold text-primary-foreground mb-4">Quick Actions</h3>
-        <NavigationShortcuts />
       </div>
       
       <Separator className="my-8 bg-primary/20"/>
