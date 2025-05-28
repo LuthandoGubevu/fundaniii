@@ -30,11 +30,11 @@ export default function CreativeToolbox() {
   };
 
   return (
-    <Card className="shadow-lg bg-card/90 backdrop-blur-sm supports-[backdrop-filter]:bg-card/90 border-[#70C1B3]/50"> {/* Teal accent */}
+    <Card className="shadow-lg bg-gradient-to-br from-[#2D9CDB] to-[#70C1B3] text-primary-foreground border-primary/50">
       <CardHeader className="pb-4">
         <div className="flex items-center space-x-2">
-           <Sparkles className="h-6 w-6 text-secondary" />
-           <CardTitle className="text-xl font-semibold text-secondary-foreground">Creative Toolbox</CardTitle>
+           <Sparkles className="h-6 w-6 text-yellow-300" /> {/* Icon color kept for emphasis */}
+           <CardTitle className="text-xl font-semibold">Creative Toolbox</CardTitle>
         </div>
         <CardDescription>Supercharge your storytelling!</CardDescription>
       </CardHeader>

@@ -58,7 +58,7 @@ export default function WelcomeSection() {
   };
 
   return (
-    <Card className="shadow-lg bg-card/90 backdrop-blur-sm supports-[backdrop-filter]:bg-card/90 border border-primary/30 overflow-hidden">
+    <Card className="shadow-lg bg-gradient-to-br from-[#2D9CDB] to-[#70C1B3] text-primary-foreground border-primary/50 overflow-hidden">
       <CardContent className="p-6 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
         <div className="relative">
           <Image
@@ -79,13 +79,13 @@ export default function WelcomeSection() {
           <h2 className="text-3xl font-bold text-primary">
             Hi, {user.name}!
           </h2>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-lg">
             Ready for a new adventure today?
           </p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="text-4xl p-2 h-auto hover:bg-accent/20">
+            <Button variant="ghost" className="text-4xl p-2 h-auto hover:bg-white/20 focus-visible:ring-white/50">
               {currentMood.emoji}
               <span className="sr-only">Current mood: {currentMood.label}</span>
             </Button>

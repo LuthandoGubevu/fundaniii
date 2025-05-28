@@ -18,18 +18,18 @@ export default function DailyPromptCard() {
   }, []);
 
   return (
-    <Card className="shadow-lg bg-card/90 backdrop-blur-sm supports-[backdrop-filter]:bg-card/90 border-[#FDCB6E]/50"> {/* Yellow accent */}
+    <Card className="shadow-lg bg-gradient-to-br from-[#2D9CDB] to-[#70C1B3] text-primary-foreground border-primary/50">
       <CardHeader className="flex flex-row items-center space-x-3 pb-3">
-        <div className="p-2 rounded-full bg-[#FDCB6E]/30">
-          <Lightbulb className="h-6 w-6 text-[#F8961E]" />
+        <div className="p-2 rounded-full bg-white/20"> {/* Adjusted icon background for better contrast */}
+          <Lightbulb className="h-6 w-6 text-yellow-300" /> {/* Icon color kept for emphasis */}
         </div>
         <div>
-          <CardTitle className="text-xl font-semibold" style={{color: '#D17D0B'}}>Spark Your Imagination!</CardTitle>
+          <CardTitle className="text-xl font-semibold" style={{color: '#FDCB6E'}}>Spark Your Imagination!</CardTitle> {/* Kept specific color for emphasis */}
           <CardDescription className="text-sm">Today's writing challenge</CardDescription>
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-lg text-card-foreground/90">
+        <p className="text-lg">
           "{prompt.text}"
         </p>
       </CardContent>
