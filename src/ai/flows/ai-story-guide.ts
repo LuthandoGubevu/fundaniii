@@ -32,12 +32,22 @@ const storyAssistancePrompt = ai.definePrompt({
   name: 'storyAssistancePrompt',
   input: {schema: StoryAssistanceInputSchema},
   output: {schema: StoryAssistanceOutputSchema},
-  prompt: `You are a helpful AI assistant guiding young learners in writing stories. You will provide suggestions and guidance to help them create a structured and engaging narrative.
+  prompt: `You are a helpful AI assistant guiding young learners (aged 7-15) in writing stories. You will provide suggestions and guidance to help them create a structured and engaging narrative.
 
 Current Story Text: {{{storyText}}}
-Theme: {{theme}}
+{{#if theme}}
+Theme: {{{theme}}}
+{{/if}}
 
-Provide suggestions for the next part of the story. Also, provide guidance on structuring the story, such as focusing on the conflict or introducing a new character. Format your response as a JSON object.`, // Ensure the prompt requests a JSON output
+Provide suggestions for the next part of the story. Also, provide guidance on structuring the story, such as focusing on the conflict or introducing a new character. 
+Format your response as a JSON object that strictly adheres to the following Zod schema:
+\`\`\`json
+{
+  "suggestions": "array of strings for beginning, middle, and end suggestions",
+  "structureGuidance": "string for overall story structure advice"
+}
+\`\`\`
+Output ONLY the JSON object, with no other surrounding text or explanations. Ensure the language used is simple, encouraging, and age-appropriate.`,
 });
 
 const storyAssistanceFlow = ai.defineFlow(
@@ -48,6 +58,9 @@ const storyAssistanceFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await storyAssistancePrompt(input);
-    return output!;
+    if (!output) {
+      throw new Error("The AI model did not return a valid response for story assistance.");
+    }
+    return output;
   }
 );

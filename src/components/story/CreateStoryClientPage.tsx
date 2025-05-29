@@ -18,9 +18,9 @@ import { translateStory, TranslateStoryInput, TranslateStoryOutput } from "@/ai/
 import { generateStoryImage, GenerateStoryImageInput, GenerateStoryImageOutput } from "@/ai/flows/generate-story-image-flow";
 import { storyThemes, storyLanguages, storyGrades, storySubjects } from "@/lib/dummy-data";
 import type { Story } from "@/lib/types";
-import { auth, db, storage } from "@/lib/firebase"; // storage might not be used now, but keep for future
+import { auth, db, storage } from "@/lib/firebase"; 
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"; 
-// import { ref as storageRef, uploadString, getDownloadURL } from "firebase/storage"; // Commented out for now
+// import { ref as storageRef, uploadString, getDownloadURL } from "firebase/storage"; // Temporarily commented out
 import { Loader2, Wand2, LanguagesIcon, Image as ImageIcon, Share2, BookPlus } from "lucide-react";
 import Image from "next/image";
 
@@ -53,8 +53,8 @@ export default function CreateStoryClientPage() {
   
   const [aiSuggestions, setAiSuggestions] = useState<StoryAssistanceOutput | null>(null);
   const [translatedStory, setTranslatedStory] = useState<string | null>(null);
-  const [firstPageImageUrl, setFirstPageImageUrl] = useState<string | null>(null); // This will hold the data URI from AI 
-  // const [isUploadingImage, setIsUploadingImage] = useState(false); // Commented out for now
+  const [firstPageImageUrl, setFirstPageImageUrl] = useState<string | null>(null); 
+  // const [isUploadingImage, setIsUploadingImage] = useState(false); // Temporarily commented out
 
 
   const storyForm = useForm<z.infer<typeof storyFormSchema>>({
@@ -89,7 +89,12 @@ export default function CreateStoryClientPage() {
         toast({ title: "AI Story Guide", description: "Suggestions received!" });
       } catch (error) {
         console.error("Error getting story assistance:", error);
-        toast({ variant: "destructive", title: "Error", description: "Could not get AI suggestions. Please try again." });
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        toast({ 
+          variant: "destructive", 
+          title: "AI Story Guide Error", 
+          description: `Could not get AI suggestions: ${errorMessage}. Please check server logs for more details.` 
+        });
       }
     });
   }
@@ -112,7 +117,12 @@ export default function CreateStoryClientPage() {
         toast({ title: "Story Translated", description: `Story translated to ${values.targetLanguage}!` });
       } catch (error) {
         console.error("Error translating story:", error);
-        toast({ variant: "destructive", title: "Error", description: "Could not translate the story. Please try again." });
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        toast({ 
+            variant: "destructive", 
+            title: "Translation Error", 
+            description: `Could not translate story: ${errorMessage}. Please check server logs.`
+        });
       }
     });
   }
@@ -169,15 +179,23 @@ export default function CreateStoryClientPage() {
         return;
     }
     
-    // let finalImageUrl: string | null = firstPageImageUrl; // Use the AI-generated data URI directly or a placeholder
-    // For now, we will set imageUrl to null in Firestore as per user request to bypass bucket setup.
     let finalImageUrl: string | null = null; 
+
+    // Temporarily bypass Firebase Storage upload logic.
+    // When ready to re-enable, uncomment the Firebase Storage code block below
+    // and ensure isUploadingImage state is handled.
+    if (firstPageImageUrl && firstPageImageUrl.startsWith('data:image')) {
+        // For now, we are not uploading. ImageUrl in Firestore will be null.
+        finalImageUrl = null; 
+        // toast({ title: "Sharing Story (Image Not Uploaded)", description: "Image generation data will not be saved to the cloud in this step." });
+    } else {
+        finalImageUrl = null; 
+    }
 
 
     startSharingTransition(async () => {
-      // setIsUploadingImage(true); // Commented out for now
       try {
-        // Temporarily bypass Firebase Storage upload
+        // START: Firebase Storage Upload Logic (Temporarily Bypassed)
         // if (firstPageImageUrl && firstPageImageUrl.startsWith('data:image')) {
         //   toast({ title: "Sharing Story", description: "Uploading image to storage..." });
         //   const imageName = `${currentUser.uid}_${Date.now()}_story.png`;
@@ -186,23 +204,10 @@ export default function CreateStoryClientPage() {
         //   const uploadResult = await uploadString(imageStorageRef, firstPageImageUrl, 'data_url');
         //   finalImageUrl = await getDownloadURL(uploadResult.ref);
         //   toast({ title: "Image Uploaded", description: "Image successfully saved to storage." });
-        // } else if (firstPageImageUrl) {
+        // } else if (firstPageImageUrl) { // If it's already a URL (e.g., placeholder)
         //   finalImageUrl = firstPageImageUrl;
         // }
-        // setIsUploadingImage(false); // Commented out for now
-
-        // If an AI image was generated (even if not uploaded), we can use its data URI for local display or a placeholder logic
-        // For now, we will ensure finalImageUrl is null or a placeholder if we are not saving to storage
-        if (firstPageImageUrl && firstPageImageUrl.startsWith('data:image')) {
-            // We have a generated image, but we are NOT uploading it.
-            // For the Firestore record, we will set imageUrl to null as requested.
-            // The firstPageImageUrl state still holds the data URI for potential client-side display if needed before reset.
-            finalImageUrl = null; 
-            toast({ title: "Sharing Story (Image Not Uploaded)", description: "Image generation data will not be saved to the cloud in this step." });
-        } else {
-            finalImageUrl = null; // No image was generated or it's not a data URI
-        }
-
+        // END: Firebase Storage Upload Logic
 
         const authorName = currentUser.displayName || currentUser.email?.split('@')[0] || "Anonymous Learner";
         
@@ -215,7 +220,7 @@ export default function CreateStoryClientPage() {
           subject: values.subject,
           language: values.language,
           theme: theme || "General",
-          imageUrl: finalImageUrl, // This will be null for now
+          imageUrl: finalImageUrl, // Will be null due to bypassing storage upload
           createdAt: serverTimestamp(),
           upvotes: 0,
         };
@@ -224,7 +229,7 @@ export default function CreateStoryClientPage() {
 
         toast({
             title: "Story Shared!",
-            description: "Your story has been successfully added to the library (image upload bypassed).",
+            description: "Your story has been added to the library (image upload currently bypassed).",
         });
 
         // Reset forms and state
@@ -236,21 +241,15 @@ export default function CreateStoryClientPage() {
         setTranslatedStory(null);
 
       } catch (error) {
-        // setIsUploadingImage(false); // Commented out for now
         console.error("Error sharing story:", error);
-        let description = "Could not share your story. Please try again.";
-        // if (error instanceof Error && error.message.includes('storage/unauthorized')) { // Storage error handling not relevant now
-        //     description = "Image upload failed: You don't have permission to upload to storage. Check Firebase Storage rules.";
-        // } else if (error instanceof Error && error.message.includes('longer than 1048487 bytes')) {
-        //     description = "Image is too large to store directly. This should have been uploaded to storage.";
-        // }
-        toast({ variant: "destructive", title: "Sharing Failed", description });
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while sharing.";
+        toast({ variant: "destructive", title: "Sharing Failed", description: errorMessage });
       }
     });
   }
 
   return (
-    <div className="space-y-8 max-w-3xl">
+    <div className="space-y-8 max-w-3xl w-full">
       <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Let's Brainstorm your story</CardTitle>
@@ -339,7 +338,7 @@ export default function CreateStoryClientPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <Form {...pageContentForm}>
-                <form className="space-y-4">
+                <form className="space-y-4"> {/* No onSubmit needed here as button has its own handler */}
                   <FormField
                     control={pageContentForm.control}
                     name="firstPageText"
@@ -399,7 +398,7 @@ export default function CreateStoryClientPage() {
           </Card>
       )}
 
-      {firstPageImageUrl && ( // Only show this card if an image (even if just a data URI) exists
+      {firstPageImageUrl && ( 
         <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
           <CardHeader>
             <CardTitle className="text-2xl font-bold flex items-center">
@@ -423,7 +422,7 @@ export default function CreateStoryClientPage() {
                       />
                   ) : (
                      <Image
-                        src={firstPageImageUrl} // Assumes it's a placeholder URL if not a data URI
+                        src={firstPageImageUrl} 
                         alt="Story illustration placeholder"
                         width={600}
                         height={338}
