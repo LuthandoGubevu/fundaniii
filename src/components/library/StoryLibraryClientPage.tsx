@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, FilterX, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase"; // Added auth import
 import { collection, getDocs, query, orderBy, Timestamp, onSnapshot } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
@@ -197,3 +197,4 @@ export default function StoryLibraryClientPage() {
     </div>
   );
 }
+
