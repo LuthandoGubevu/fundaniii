@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -18,11 +18,14 @@ import { translateStory, TranslateStoryInput, TranslateStoryOutput } from "@/ai/
 import { generateStoryImage, GenerateStoryImageInput, GenerateStoryImageOutput } from "@/ai/flows/generate-story-image-flow";
 import { storyThemes, storyLanguages, storyGrades, storySubjects } from "@/lib/dummy-data";
 import type { Story } from "@/lib/types";
-import { auth, db, storage } from "@/lib/firebase"; 
+import { auth, db } from "@/lib/firebase"; 
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"; 
-// import { ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
-import { Loader2, Wand2, LanguagesIcon, Image as ImageIcon, Share2, BookPlus } from "lucide-react";
+// Temporarily removed Firebase Storage imports as per user request
+// import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
+import { Loader2, Wand2, LanguagesIcon, Image as ImageIconLucide, Share2, BookPlus } from "lucide-react";
 import Image from "next/image";
+import { useSearchParams } from 'next/navigation';
+
 
 const storyFormSchema = z.object({
   storyText: z.string().min(10, { message: "Your story idea needs to be a bit longer!" }),
@@ -46,6 +49,9 @@ const storyDetailsSchema = z.object({
 
 export default function CreateStoryClientPage() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const initialPrompt = searchParams.get('prompt');
+
   const [isAssistanceLoading, startAssistanceTransition] = useTransition();
   const [isTranslationLoading, startTranslationTransition] = useTransition();
   const [isImageGenerating, startImageGenerationTransition] = useTransition();
@@ -58,7 +64,7 @@ export default function CreateStoryClientPage() {
 
   const storyForm = useForm<z.infer<typeof storyFormSchema>>({
     resolver: zodResolver(storyFormSchema),
-    defaultValues: { storyText: "", theme: "" },
+    defaultValues: { storyText: initialPrompt || "", theme: "" },
   });
 
   const translateForm = useForm<z.infer<typeof translateFormSchema>>({
@@ -76,6 +82,16 @@ export default function CreateStoryClientPage() {
     defaultValues: { title: "", grade: "", subject: "", language: "" },
   });
 
+  // Auto-get assistance if prompt is present in URL
+  useEffect(() => {
+    if (initialPrompt && !aiSuggestions) {
+      storyForm.setValue("storyText", initialPrompt);
+      onGetAssistance({ storyText: initialPrompt, theme: storyForm.getValues("theme") });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPrompt]);
+
+
   async function onGetAssistance(values: z.infer<typeof storyFormSchema>) {
     startAssistanceTransition(async () => {
       try {
@@ -85,6 +101,9 @@ export default function CreateStoryClientPage() {
         };
         const result = await storyAssistance(assistanceInput);
         setAiSuggestions(result);
+        if (result && result.suggestions && result.suggestions.length > 0) {
+          pageContentForm.setValue("firstPageText", result.suggestions[0]);
+        }
         toast({ title: "AI Story Guide", description: "Suggestions received!" });
       } catch (error) {
         console.error("Error getting story assistance:", error);
@@ -178,15 +197,21 @@ export default function CreateStoryClientPage() {
         return;
     }
     
-    let finalImageUrl: string | null = null; 
+    let finalImageUrlForFirestore: string | null = null; 
 
-    // Temporarily bypass Firebase Storage upload logic for testing.
-    // When ready to re-enable, uncomment the Firebase Storage code block below.
-    // For now, we are not uploading. ImageUrl in Firestore will be null.
-    // if (firstPageImageUrl && firstPageImageUrl.startsWith('data:image')) {
-    //   toast({ title: "Image Upload Bypassed", description: "Image data will not be saved to the cloud in this step for testing." });
-    // }
-    finalImageUrl = null; // Ensure imageUrl is explicitly null for Firestore if not uploading.
+    // Bypassing Firebase Storage upload as per user request
+    if (firstPageImageUrl && firstPageImageUrl.startsWith('data:image')) {
+      // For now, we are not uploading. ImageUrl in Firestore will be null.
+      // This is where you'd normally put the Firebase Storage upload logic.
+      // For testing, we'll keep finalImageUrlForFirestore as null or the placeholder if no real image.
+      // finalImageUrlForFirestore = firstPageImageUrl; // If storing Data URI directly (NOT RECOMMENDED for prod)
+      console.log("Bypassing actual image upload to Firebase Storage. Storing placeholder or null.");
+      // If you want to use the placeholder that was shown, you could set it here,
+      // but it's better to store null if a real upload didn't happen.
+      // finalImageUrlForFirestore = "https://placehold.co/600x400.png?text=Story+Image";
+      // For now, we explicitly set it to null because we are "bypassing"
+      finalImageUrlForFirestore = null; 
+    }
 
 
     startSharingTransition(async () => {
@@ -202,19 +227,20 @@ export default function CreateStoryClientPage() {
           subject: values.subject,
           language: values.language,
           theme: theme || "General",
-          imageUrl: finalImageUrl, 
+          imageUrl: finalImageUrlForFirestore, 
           createdAt: serverTimestamp(),
           upvotes: 0,
+          likedBy: [], // Initialize likedBy array
         };
 
         await addDoc(collection(db, "stories"), storyToSave);
 
         toast({
             title: "Story Shared!",
-            description: "Your story has been added to the library (image upload currently bypassed).",
+            description: "Your story has been added to the library.",
         });
 
-        storyForm.reset();
+        storyForm.reset({ storyText: "", theme: "" });
         pageContentForm.reset();
         storyDetailsForm.reset();
         setAiSuggestions(null);
@@ -225,17 +251,17 @@ export default function CreateStoryClientPage() {
         console.error("Error sharing story:", error);
         let errorMessage = "An unknown error occurred while sharing.";
         if (error.code === "permission-denied" || (error.message && error.message.toLowerCase().includes("missing or insufficient permissions"))) {
-          errorMessage = "Sharing failed due to Firestore permissions. Please check your Firestore Security Rules to allow creating documents in the 'stories' collection.";
+          errorMessage = "Sharing failed due to Firestore permissions. Please check your Firestore Security Rules to allow creating documents in the 'stories' collection, ensuring 'authorId' matches your UID.";
         } else if (error.message) {
           errorMessage = error.message;
         }
-        toast({ variant: "destructive", title: "Sharing Failed", description: errorMessage, duration: 7000 });
+        toast({ variant: "destructive", title: "Sharing Failed", description: errorMessage, duration: 9000 });
       }
     });
   }
 
   return (
-    <div className="space-y-8 max-w-3xl w-full">
+    <div className="space-y-8 max-w-3xl">
       <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Let's Brainstorm your story</CardTitle>
@@ -268,7 +294,7 @@ export default function CreateStoryClientPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Optional: Select a Theme</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                         <FormControl>
                           <SelectTrigger className="bg-background/70">
                             <SelectValue placeholder="Choose a theme..." />
@@ -364,7 +390,7 @@ export default function CreateStoryClientPage() {
                     />
                   ) : (
                     <div className="text-center text-muted-foreground">
-                      <ImageIcon className="mx-auto h-12 w-12 mb-2" />
+                      <ImageIconLucide className="mx-auto h-12 w-12 mb-2" />
                       <p>Your AI-generated image will appear here.</p>
                       <p className="text-xs">(Write text above and click "Get AI Image")</p>
                     </div>
@@ -376,7 +402,7 @@ export default function CreateStoryClientPage() {
                 {isImageGenerating ? (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 ) : (
-                  <ImageIcon className="mr-2 h-5 w-5" />
+                  <ImageIconLucide className="mr-2 h-5 w-5" />
                 )}
                 Get AI Image 
               </Button>
@@ -445,7 +471,7 @@ export default function CreateStoryClientPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Grade</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                           <FormControl><SelectTrigger className="bg-background/70"><SelectValue placeholder="Select Grade" /></SelectTrigger></FormControl>
                           <SelectContent>
                             {storyGrades.map(grade => <SelectItem key={grade} value={grade}>{grade}</SelectItem>)}
@@ -461,7 +487,7 @@ export default function CreateStoryClientPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Subject</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                           <FormControl><SelectTrigger className="bg-background/70"><SelectValue placeholder="Select Subject" /></SelectTrigger></FormControl>
                           <SelectContent>
                             {storySubjects.map(subject => <SelectItem key={subject} value={subject}>{subject}</SelectItem>)}
@@ -477,7 +503,7 @@ export default function CreateStoryClientPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Language</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                           <FormControl><SelectTrigger className="bg-background/70"><SelectValue placeholder="Select Language" /></SelectTrigger></FormControl>
                           <SelectContent>
                             {storyLanguages.map(lang => <SelectItem key={lang} value={lang}>{lang}</SelectItem>)}
@@ -517,7 +543,7 @@ export default function CreateStoryClientPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Translate to</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} defaultValue="">
                         <FormControl>
                           <SelectTrigger className="bg-background/70">
                             <SelectValue placeholder="Select language..." />

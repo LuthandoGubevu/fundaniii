@@ -40,7 +40,8 @@ export default function StoryLibraryClientPage() {
         return {
           id: doc.id,
           ...data,
-          upvotes: data.upvotes || 0, // Ensure upvotes defaults to 0
+          upvotes: data.upvotes || 0,
+          likedBy: data.likedBy || [], // Ensure likedBy defaults to empty array
           createdAt,
         } as Story;
       });
@@ -49,7 +50,7 @@ export default function StoryLibraryClientPage() {
         setAllStories(fetchedStories);
       } else {
         console.log("No stories found in Firestore, using dummy stories as fallback.");
-        setAllStories(dummyStories.map(s => ({...s, upvotes: s.upvotes || 0})));
+        setAllStories(dummyStories.map(s => ({...s, upvotes: s.upvotes || 0, likedBy: s.likedBy || [] })));
       }
       setIsLoading(false);
     }, (error) => {
@@ -59,11 +60,11 @@ export default function StoryLibraryClientPage() {
         title: "Error Loading Stories",
         description: "Could not fetch stories. Displaying placeholder stories instead.",
       });
-      setAllStories(dummyStories.map(s => ({...s, upvotes: s.upvotes || 0}))); 
+      setAllStories(dummyStories.map(s => ({...s, upvotes: s.upvotes || 0, likedBy: s.likedBy || [] }))); 
       setIsLoading(false);
     });
 
-    return () => unsubscribe(); // Cleanup onSnapshot listener
+    return () => unsubscribe(); 
   }, [toast]);
 
   useEffect(() => {
@@ -97,10 +98,10 @@ export default function StoryLibraryClientPage() {
     setSearchTerm("");
   };
   
-  const handleStoryLikeUpdate = (storyId: string, newLikes: number) => {
+  const handleStoryLikeUpdate = (storyId: string, newLikes: number, newIsLiked: boolean) => {
     setAllStories(prevStories => 
       prevStories.map(story => 
-        story.id === storyId ? { ...story, upvotes: newLikes } : story
+        story.id === storyId ? { ...story, upvotes: newLikes, likedBy: newIsLiked ? [...(story.likedBy || []), auth.currentUser?.uid || ''] : (story.likedBy || []).filter(uid => uid !== (auth.currentUser?.uid || '')) } : story
       )
     );
   };

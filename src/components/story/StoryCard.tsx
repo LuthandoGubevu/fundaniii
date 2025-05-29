@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 
 interface StoryCardProps {
   story: Story;
-  onLikeUpdated?: (storyId: string, newLikes: number) => void;
+  onLikeUpdated?: (storyId: string, newLikes: number, newIsLiked: boolean) => void;
 }
 
 export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
@@ -27,27 +27,25 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
   
   let createdAtDate: Date;
   try {
-    if (story.createdAt instanceof Timestamp) { // Check if it's already a Firestore Timestamp
+    if (story.createdAt instanceof Timestamp) {
       createdAtDate = story.createdAt.toDate();
     } else if (typeof story.createdAt === 'string') {
       createdAtDate = new Date(story.createdAt);
-    } else if (story.createdAt && typeof (story.createdAt as any).seconds === 'number') { // Handle plain object with seconds/nanoseconds
+    } else if (story.createdAt && typeof (story.createdAt as any).seconds === 'number') {
       createdAtDate = new Timestamp((story.createdAt as any).seconds, (story.createdAt as any).nanoseconds).toDate();
-    }
-    else {
-      createdAtDate = new Date(); // Fallback, though ideally createdAt is always valid
+    } else {
+      createdAtDate = new Date(); 
     }
   } catch (e) {
     console.warn("Error parsing story.createdAt:", story.createdAt, e);
-    createdAtDate = new Date(); // Fallback
+    createdAtDate = new Date(); 
   }
 
-
   const { toast } = useToast();
-
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(auth.currentUser);
+  const [isLiked, setIsLiked] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [isLiking, startLikingTransition] = useTransition();
+  const [isLikingInProgress, startLikingTransition] = useTransition();
   const [isFollowInProgress, startFollowTransition] = useTransition();
   const [currentUpvotes, setCurrentUpvotes] = useState(story.upvotes || 0);
   const [isAnimatingLike, setIsAnimatingLike] = useState(false);
@@ -58,6 +56,16 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (currentUser && story.likedBy) {
+      setIsLiked(story.likedBy.includes(currentUser.uid));
+    } else {
+      setIsLiked(false);
+    }
+    setCurrentUpvotes(story.upvotes || 0);
+  }, [currentUser, story.likedBy, story.upvotes]);
+
 
   useEffect(() => {
     if (!currentUser || !story.authorId || currentUser.uid === story.authorId) {
@@ -82,34 +90,51 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
   }, [currentUser, story.authorId]);
 
 
-  const handleLike = async () => {
+  const handleLikeToggle = async () => {
     if (!currentUser) {
-      toast({ variant: "destructive", title: "Authentication Required", description: "You need to be logged in to like a story." });
+      toast({ variant: "destructive", title: "Authentication Required", description: "You need to be logged in to like or unlike a story." });
       return;
     }
-    if (isLiking) return;
+    if (isLikingInProgress) return;
 
     setIsAnimatingLike(true);
     setTimeout(() => setIsAnimatingLike(false), 300);
 
-    const newOptimisticLikes = currentUpvotes + 1;
-    setCurrentUpvotes(newOptimisticLikes);
-    if (onLikeUpdated) onLikeUpdated(story.id, newOptimisticLikes);
+    const storyRef = doc(db, "stories", story.id);
+    const newOptimisticLikes = isLiked ? currentUpvotes - 1 : currentUpvotes + 1;
+    const newIsLiked = !isLiked;
 
+    // Optimistic UI update
+    setCurrentUpvotes(newOptimisticLikes);
+    setIsLiked(newIsLiked);
+    if (onLikeUpdated) onLikeUpdated(story.id, newOptimisticLikes, newIsLiked);
 
     startLikingTransition(async () => {
       try {
-        const storyRef = doc(db, "stories", story.id);
-        await updateDoc(storyRef, { upvotes: increment(1) });
-      } catch (error: any) {
-        console.error("Error liking story:", error);
-        let errorDesc = "Could not update like count. Please try again.";
-        if (error.code === "permission-denied") {
-          errorDesc = "Liking failed due to Firestore permissions. Please check security rules for updating 'stories' collection.";
+        if (newIsLiked) { // User is liking
+          await updateDoc(storyRef, { 
+            upvotes: increment(1),
+            likedBy: arrayUnion(currentUser.uid)
+          });
+        } else { // User is unliking
+          await updateDoc(storyRef, { 
+            upvotes: increment(-1),
+            likedBy: arrayRemove(currentUser.uid)
+          });
         }
-        toast({ variant: "destructive", title: "Like Failed", description: errorDesc, duration: 7000 });
-        setCurrentUpvotes(currentUpvotes); 
-        if (onLikeUpdated) onLikeUpdated(story.id, currentUpvotes); 
+        // No toast on success for likes/unlikes to reduce noise, UI update is enough.
+      } catch (error: any) {
+        console.error("Error liking/unliking story:", error);
+        // Revert optimistic update on error
+        setCurrentUpvotes(currentUpvotes);
+        setIsLiked(isLiked);
+        if (onLikeUpdated) onLikeUpdated(story.id, currentUpvotes, isLiked);
+        
+        let errorDesc = "Could not update like status. Please try again.";
+        if (error.code === "permission-denied") {
+          errorDesc = "Liking/unliking failed due to Firestore permissions. Please check security rules for updating 'stories' collection (upvotes and likedBy fields).";
+        }
+        toast({ variant: "destructive", title: "Like Action Failed", description: errorDesc, duration: 7000 });
         setIsAnimatingLike(false);
       }
     });
@@ -127,12 +152,12 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
       const authorUserDocRef = doc(db, "users", story.authorId!);
 
       try {
-        if (isFollowing) {
+        if (isFollowing) { // Unfollow
           await updateDoc(currentUserDocRef, { following: arrayRemove(story.authorId) });
           await updateDoc(authorUserDocRef, { followersCount: increment(-1) });
           setIsFollowing(false); 
           toast({ title: "Unfollowed", description: `You are no longer following ${story.author}.` });
-        } else {
+        } else { // Follow
           await updateDoc(currentUserDocRef, { following: arrayUnion(story.authorId) });
           await updateDoc(authorUserDocRef, { followersCount: increment(1) });
           setIsFollowing(true); 
@@ -142,9 +167,9 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
         console.error("Error toggling follow:", error);
         let errorDesc = "Could not update follow status. Please try again.";
          if (error.code === "permission-denied") {
-          errorDesc = "Follow action failed due to Firestore permissions. Please check security rules for updating 'users' collection (both 'following' and 'followersCount' fields).";
+          errorDesc = "Follow action failed due to Firestore permissions. Ensure rules allow updating 'following' on your own user doc and 'followersCount' on the author's user doc.";
         }
-        toast({ variant: "destructive", title: "Follow Action Failed", description: errorDesc, duration: 7000 });
+        toast({ variant: "destructive", title: "Follow Action Failed", description: errorDesc, duration: 9000 });
       }
     });
   };
@@ -195,17 +220,17 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleLike}
-            disabled={isLiking}
+            onClick={handleLikeToggle}
+            disabled={isLikingInProgress}
             className={cn(
-              "text-destructive-foreground hover:bg-red-500/20 p-1.5 rounded-full",
+              "p-1.5 rounded-full",
+              isLiked ? "text-red-500 hover:bg-red-500/10" : "text-muted-foreground hover:bg-red-500/10",
               isAnimatingLike && "animate-pulse"
             )}
           >
             <Heart
               className={cn("h-5 w-5 transition-transform duration-150", isAnimatingLike && "scale-125")}
-              fill="hsl(var(--destructive))"
-              color="hsl(var(--destructive))"
+              fill={isLiked ? "currentColor" : "none"}
             />
             <span className="ml-1.5 text-sm text-muted-foreground">{currentUpvotes}</span>
             <span className="sr-only">Like story</span>

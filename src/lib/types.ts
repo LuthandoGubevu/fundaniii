@@ -9,10 +9,11 @@ export interface Story {
   subject: string;
   language: string;
   theme?: string;
-  imageUrl?: string;
-  createdAt: string;
+  imageUrl?: string | null; // Can be null if no image
+  createdAt: string; // Should be ISO string or Firestore Timestamp compatible
   status?: 'Draft' | 'In Review' | 'Published';
   upvotes?: number;
+  likedBy?: string[]; // Array of user UIDs who liked the story
 }
 
 export interface ChatMessage {
@@ -27,7 +28,6 @@ export interface UserProfile {
   name: string;
   avatarUrl?: string;
   mood?: Mood;
-  // Fields for follow functionality
   following?: string[]; // Array of user IDs the current user is following
   followersCount?: number; // How many users follow this user
   uid?: string; // User's own ID
@@ -35,7 +35,7 @@ export interface UserProfile {
   school?: string;
   grade?: string;
   surname?: string;
-  createdAt?: string;
+  createdAt?: any; // Firestore Timestamp
 }
 
 export interface Mood {
@@ -67,10 +67,9 @@ export interface DailyPrompt {
 
 export type FeaturedStory = Story;
 
-// New type for Study Buddy subjects
 export interface SubjectItem {
   id: string;
   name: string;
-  icon: React.ElementType; // Lucide icon component
-  color?: string; // Optional color for subject card/button
+  icon: React.ElementType;
+  color?: string;
 }
