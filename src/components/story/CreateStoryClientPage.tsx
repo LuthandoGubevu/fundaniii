@@ -20,7 +20,7 @@ import { storyThemes, storyLanguages, storyGrades, storySubjects } from "@/lib/d
 import type { Story } from "@/lib/types";
 import { auth, db, storage } from "@/lib/firebase"; 
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"; 
-// import { ref as storageRef, uploadString, getDownloadURL } from "firebase/storage"; // Temporarily commented out
+// import { ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 import { Loader2, Wand2, LanguagesIcon, Image as ImageIcon, Share2, BookPlus } from "lucide-react";
 import Image from "next/image";
 
@@ -54,7 +54,6 @@ export default function CreateStoryClientPage() {
   const [aiSuggestions, setAiSuggestions] = useState<StoryAssistanceOutput | null>(null);
   const [translatedStory, setTranslatedStory] = useState<string | null>(null);
   const [firstPageImageUrl, setFirstPageImageUrl] = useState<string | null>(null); 
-  // const [isUploadingImage, setIsUploadingImage] = useState(false); // Temporarily commented out
 
 
   const storyForm = useForm<z.infer<typeof storyFormSchema>>({
@@ -181,34 +180,17 @@ export default function CreateStoryClientPage() {
     
     let finalImageUrl: string | null = null; 
 
-    // Temporarily bypass Firebase Storage upload logic.
-    // When ready to re-enable, uncomment the Firebase Storage code block below
-    // and ensure isUploadingImage state is handled.
-    if (firstPageImageUrl && firstPageImageUrl.startsWith('data:image')) {
-        // For now, we are not uploading. ImageUrl in Firestore will be null.
-        finalImageUrl = null; 
-        // toast({ title: "Sharing Story (Image Not Uploaded)", description: "Image generation data will not be saved to the cloud in this step." });
-    } else {
-        finalImageUrl = null; 
-    }
+    // Temporarily bypass Firebase Storage upload logic for testing.
+    // When ready to re-enable, uncomment the Firebase Storage code block below.
+    // For now, we are not uploading. ImageUrl in Firestore will be null.
+    // if (firstPageImageUrl && firstPageImageUrl.startsWith('data:image')) {
+    //   toast({ title: "Image Upload Bypassed", description: "Image data will not be saved to the cloud in this step for testing." });
+    // }
+    finalImageUrl = null; // Ensure imageUrl is explicitly null for Firestore if not uploading.
 
 
     startSharingTransition(async () => {
       try {
-        // START: Firebase Storage Upload Logic (Temporarily Bypassed)
-        // if (firstPageImageUrl && firstPageImageUrl.startsWith('data:image')) {
-        //   toast({ title: "Sharing Story", description: "Uploading image to storage..." });
-        //   const imageName = `${currentUser.uid}_${Date.now()}_story.png`;
-        //   const imageStorageRef = storageRef(storage, `story_images/${imageName}`);
-          
-        //   const uploadResult = await uploadString(imageStorageRef, firstPageImageUrl, 'data_url');
-        //   finalImageUrl = await getDownloadURL(uploadResult.ref);
-        //   toast({ title: "Image Uploaded", description: "Image successfully saved to storage." });
-        // } else if (firstPageImageUrl) { // If it's already a URL (e.g., placeholder)
-        //   finalImageUrl = firstPageImageUrl;
-        // }
-        // END: Firebase Storage Upload Logic
-
         const authorName = currentUser.displayName || currentUser.email?.split('@')[0] || "Anonymous Learner";
         
         const storyToSave: Omit<Story, 'id' | 'createdAt'> & { createdAt: any, authorId: string } = {
@@ -220,7 +202,7 @@ export default function CreateStoryClientPage() {
           subject: values.subject,
           language: values.language,
           theme: theme || "General",
-          imageUrl: finalImageUrl, // Will be null due to bypassing storage upload
+          imageUrl: finalImageUrl, 
           createdAt: serverTimestamp(),
           upvotes: 0,
         };
@@ -232,7 +214,6 @@ export default function CreateStoryClientPage() {
             description: "Your story has been added to the library (image upload currently bypassed).",
         });
 
-        // Reset forms and state
         storyForm.reset();
         pageContentForm.reset();
         storyDetailsForm.reset();
@@ -240,10 +221,15 @@ export default function CreateStoryClientPage() {
         setFirstPageImageUrl(null);
         setTranslatedStory(null);
 
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error sharing story:", error);
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while sharing.";
-        toast({ variant: "destructive", title: "Sharing Failed", description: errorMessage });
+        let errorMessage = "An unknown error occurred while sharing.";
+        if (error.code === "permission-denied" || (error.message && error.message.toLowerCase().includes("missing or insufficient permissions"))) {
+          errorMessage = "Sharing failed due to Firestore permissions. Please check your Firestore Security Rules to allow creating documents in the 'stories' collection.";
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        toast({ variant: "destructive", title: "Sharing Failed", description: errorMessage, duration: 7000 });
       }
     });
   }
@@ -338,7 +324,7 @@ export default function CreateStoryClientPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <Form {...pageContentForm}>
-                <form className="space-y-4"> {/* No onSubmit needed here as button has its own handler */}
+                <form className="space-y-4"> 
                   <FormField
                     control={pageContentForm.control}
                     name="firstPageText"
@@ -565,4 +551,3 @@ export default function CreateStoryClientPage() {
     </div>
   );
 }
-

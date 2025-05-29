@@ -11,7 +11,7 @@ import { ArrowRight, UserCircle, CalendarDays, Tag, Heart, MessageCircle, UserPl
 import { formatDistanceToNow } from 'date-fns';
 import { useState, useTransition, useEffect } from "react";
 import { db, auth } from "@/lib/firebase";
-import { doc, updateDoc, increment, getDoc, arrayUnion, arrayRemove, onSnapshot } from "firebase/firestore";
+import { doc, updateDoc, increment, getDoc, arrayUnion, arrayRemove, onSnapshot, Timestamp } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -20,12 +20,29 @@ import { cn } from "@/lib/utils";
 interface StoryCardProps {
   story: Story;
   onLikeUpdated?: (storyId: string, newLikes: number) => void;
-  // No onFollowUpdated needed here as follow status is specific to the current user, not just the story card
 }
 
 export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
   const contentSnippet = story.content.length > 100 ? story.content.substring(0, 100) + "..." : story.content;
-  const createdAt = new Date(story.createdAt);
+  
+  let createdAtDate: Date;
+  try {
+    if (story.createdAt instanceof Timestamp) { // Check if it's already a Firestore Timestamp
+      createdAtDate = story.createdAt.toDate();
+    } else if (typeof story.createdAt === 'string') {
+      createdAtDate = new Date(story.createdAt);
+    } else if (story.createdAt && typeof (story.createdAt as any).seconds === 'number') { // Handle plain object with seconds/nanoseconds
+      createdAtDate = new Timestamp((story.createdAt as any).seconds, (story.createdAt as any).nanoseconds).toDate();
+    }
+    else {
+      createdAtDate = new Date(); // Fallback, though ideally createdAt is always valid
+    }
+  } catch (e) {
+    console.warn("Error parsing story.createdAt:", story.createdAt, e);
+    createdAtDate = new Date(); // Fallback
+  }
+
+
   const { toast } = useToast();
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -44,7 +61,7 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
 
   useEffect(() => {
     if (!currentUser || !story.authorId || currentUser.uid === story.authorId) {
-      setIsFollowing(false); // Can't follow self, or no one to follow/no one logged in
+      setIsFollowing(false); 
       return;
     }
 
@@ -75,7 +92,6 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
     setIsAnimatingLike(true);
     setTimeout(() => setIsAnimatingLike(false), 300);
 
-    // Optimistic UI update
     const newOptimisticLikes = currentUpvotes + 1;
     setCurrentUpvotes(newOptimisticLikes);
     if (onLikeUpdated) onLikeUpdated(story.id, newOptimisticLikes);
@@ -85,14 +101,15 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
       try {
         const storyRef = doc(db, "stories", story.id);
         await updateDoc(storyRef, { upvotes: increment(1) });
-        // No need to re-set currentUpvotes if Firestore write succeeds as it's already optimistically updated.
-        // Consider fetching the latest count if absolute accuracy post-write is critical, but usually optimistic is fine.
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error liking story:", error);
-        toast({ variant: "destructive", title: "Like Failed", description: "Could not update like count. Please try again." });
-        // Revert optimistic update on failure
-        setCurrentUpvotes(currentUpvotes); // Revert to pre-optimistic value
-        if (onLikeUpdated) onLikeUpdated(story.id, currentUpvotes); // Revert parent's state too
+        let errorDesc = "Could not update like count. Please try again.";
+        if (error.code === "permission-denied") {
+          errorDesc = "Liking failed due to Firestore permissions. Please check security rules for updating 'stories' collection.";
+        }
+        toast({ variant: "destructive", title: "Like Failed", description: errorDesc, duration: 7000 });
+        setCurrentUpvotes(currentUpvotes); 
+        if (onLikeUpdated) onLikeUpdated(story.id, currentUpvotes); 
         setIsAnimatingLike(false);
       }
     });
@@ -111,22 +128,23 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
 
       try {
         if (isFollowing) {
-          // Unfollow
           await updateDoc(currentUserDocRef, { following: arrayRemove(story.authorId) });
           await updateDoc(authorUserDocRef, { followersCount: increment(-1) });
-          setIsFollowing(false); // Optimistic update
+          setIsFollowing(false); 
           toast({ title: "Unfollowed", description: `You are no longer following ${story.author}.` });
         } else {
-          // Follow
           await updateDoc(currentUserDocRef, { following: arrayUnion(story.authorId) });
           await updateDoc(authorUserDocRef, { followersCount: increment(1) });
-          setIsFollowing(true); // Optimistic update
+          setIsFollowing(true); 
           toast({ title: "Followed!", description: `You are now following ${story.author}.` });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error toggling follow:", error);
-        toast({ variant: "destructive", title: "Follow Action Failed", description: "Could not update follow status. Please try again." });
-        // Revert optimistic update on error if needed, but onSnapshot should eventually correct it.
+        let errorDesc = "Could not update follow status. Please try again.";
+         if (error.code === "permission-denied") {
+          errorDesc = "Follow action failed due to Firestore permissions. Please check security rules for updating 'users' collection (both 'following' and 'followersCount' fields).";
+        }
+        toast({ variant: "destructive", title: "Follow Action Failed", description: errorDesc, duration: 7000 });
       }
     });
   };
@@ -194,7 +212,7 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
           </Button>
            <p className="text-xs text-muted-foreground flex items-center">
             <CalendarDays className="w-3 h-3 mr-1.5" />
-            {formatDistanceToNow(createdAt, { addSuffix: true })}
+            {formatDistanceToNow(createdAtDate, { addSuffix: true })}
           </p>
         </div>
         <Button variant="ghost" size="sm" asChild>
