@@ -59,6 +59,7 @@ export default function SignUpForm() {
         });
 
         // Store additional user information in Firestore
+        // This is the part that requires Firestore permissions
         await setDoc(doc(db, "users", user.uid), {
           uid: user.uid,
           email: values.email,
@@ -89,7 +90,10 @@ export default function SignUpForm() {
                      error.message.toLowerCase().includes("permission-denied"))
                    )
                   ) {
-          errorMessage = `Account created in Auth, but failed to save user details to Firestore. This is likely a Firestore Security Rules issue. Please check your Firestore rules to allow users to write to their own document in the 'users' collection (e.g., /users/{uid}). Firebase Error: ${error.message}`;
+          errorMessage = `Account created in Auth, but FAILED TO SAVE USER DETAILS TO DATABASE due to Firestore permissions. 
+                          Please check your Firestore Security Rules. 
+                          Ensure the rule 'match /users/{userId} { allow write: if request.auth.uid == userId; }' (or similar) is in place and published. 
+                          Firebase Error: ${error.message}`;
         } else if (error.message) {
           errorMessage = error.message;
         }
@@ -98,7 +102,7 @@ export default function SignUpForm() {
           variant: "destructive",
           title: "Sign Up Failed",
           description: errorMessage,
-          duration: 9000, 
+          duration: 10000, // Increased duration for more complex error
         });
       }
     });
@@ -209,3 +213,5 @@ export default function SignUpForm() {
     </Card>
   );
 }
+
+    
