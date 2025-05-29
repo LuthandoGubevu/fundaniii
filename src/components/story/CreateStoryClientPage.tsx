@@ -18,10 +18,10 @@ import { translateStory, TranslateStoryInput, TranslateStoryOutput } from "@/ai/
 import { generateStoryImage, GenerateStoryImageInput, GenerateStoryImageOutput } from "@/ai/flows/generate-story-image-flow";
 import { storyThemes, storyLanguages, storyGrades, storySubjects } from "@/lib/dummy-data";
 import type { Story } from "@/lib/types";
-import { auth, db, storage } from "@/lib/firebase"; // Import storage
+import { auth, db, storage } from "@/lib/firebase"; // storage might not be used now, but keep for future
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"; 
-import { ref as storageRef, uploadString, getDownloadURL } from "firebase/storage"; // Import Firebase Storage functions
-import { Loader2, Wand2, LanguagesIcon, Image as ImageIcon, Share2, BookPlus, UploadCloud } from "lucide-react";
+// import { ref as storageRef, uploadString, getDownloadURL } from "firebase/storage"; // Commented out for now
+import { Loader2, Wand2, LanguagesIcon, Image as ImageIcon, Share2, BookPlus } from "lucide-react";
 import Image from "next/image";
 
 const storyFormSchema = z.object({
@@ -53,8 +53,8 @@ export default function CreateStoryClientPage() {
   
   const [aiSuggestions, setAiSuggestions] = useState<StoryAssistanceOutput | null>(null);
   const [translatedStory, setTranslatedStory] = useState<string | null>(null);
-  const [firstPageImageUrl, setFirstPageImageUrl] = useState<string | null>(null); // This will hold the data URI from AI or download URL after upload
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [firstPageImageUrl, setFirstPageImageUrl] = useState<string | null>(null); // This will hold the data URI from AI 
+  // const [isUploadingImage, setIsUploadingImage] = useState(false); // Commented out for now
 
 
   const storyForm = useForm<z.infer<typeof storyFormSchema>>({
@@ -136,7 +136,7 @@ export default function CreateStoryClientPage() {
         const imagePrompt = `A whimsical and vibrant children's storybook illustration for a story page. The scene depicts: ${pageText}. Ensure the style is friendly, colorful, and appropriate for young children. No text or words in the image.`;
         const input: GenerateStoryImageInput = { prompt: imagePrompt };
         const result: GenerateStoryImageOutput = await generateStoryImage(input);
-        setFirstPageImageUrl(result.imageDataUri); // Store data URI temporarily
+        setFirstPageImageUrl(result.imageDataUri); 
         toast({
           title: "Image Generated!",
           description: "Your AI illustration is ready.",
@@ -169,30 +169,44 @@ export default function CreateStoryClientPage() {
         return;
     }
     
-    let finalImageUrl: string | null = null;
+    // let finalImageUrl: string | null = firstPageImageUrl; // Use the AI-generated data URI directly or a placeholder
+    // For now, we will set imageUrl to null in Firestore as per user request to bypass bucket setup.
+    let finalImageUrl: string | null = null; 
+
 
     startSharingTransition(async () => {
-      setIsUploadingImage(true);
+      // setIsUploadingImage(true); // Commented out for now
       try {
-        if (firstPageImageUrl && firstPageImageUrl.startsWith('data:image')) {
-          toast({ title: "Sharing Story", description: "Uploading image to storage..." });
-          const imageName = `${currentUser.uid}_${Date.now()}_story.png`;
-          const imageStorageRef = storageRef(storage, `story_images/${imageName}`);
+        // Temporarily bypass Firebase Storage upload
+        // if (firstPageImageUrl && firstPageImageUrl.startsWith('data:image')) {
+        //   toast({ title: "Sharing Story", description: "Uploading image to storage..." });
+        //   const imageName = `${currentUser.uid}_${Date.now()}_story.png`;
+        //   const imageStorageRef = storageRef(storage, `story_images/${imageName}`);
           
-          // Upload the base64 string (Data URL)
-          const uploadResult = await uploadString(imageStorageRef, firstPageImageUrl, 'data_url');
-          finalImageUrl = await getDownloadURL(uploadResult.ref);
-          toast({ title: "Image Uploaded", description: "Image successfully saved to storage." });
-        } else if (firstPageImageUrl) {
-          // If it's already a URL (e.g., placeholder or previously uploaded), use it directly
-          finalImageUrl = firstPageImageUrl;
+        //   const uploadResult = await uploadString(imageStorageRef, firstPageImageUrl, 'data_url');
+        //   finalImageUrl = await getDownloadURL(uploadResult.ref);
+        //   toast({ title: "Image Uploaded", description: "Image successfully saved to storage." });
+        // } else if (firstPageImageUrl) {
+        //   finalImageUrl = firstPageImageUrl;
+        // }
+        // setIsUploadingImage(false); // Commented out for now
+
+        // If an AI image was generated (even if not uploaded), we can use its data URI for local display or a placeholder logic
+        // For now, we will ensure finalImageUrl is null or a placeholder if we are not saving to storage
+        if (firstPageImageUrl && firstPageImageUrl.startsWith('data:image')) {
+            // We have a generated image, but we are NOT uploading it.
+            // For the Firestore record, we will set imageUrl to null as requested.
+            // The firstPageImageUrl state still holds the data URI for potential client-side display if needed before reset.
+            finalImageUrl = null; 
+            toast({ title: "Sharing Story (Image Not Uploaded)", description: "Image generation data will not be saved to the cloud in this step." });
+        } else {
+            finalImageUrl = null; // No image was generated or it's not a data URI
         }
-        setIsUploadingImage(false);
 
 
-        const authorName = currentUser.displayName || currentUser.email || "Anonymous Learner";
+        const authorName = currentUser.displayName || currentUser.email?.split('@')[0] || "Anonymous Learner";
         
-        const storyToSave: Omit<Story, 'id' | 'createdAt'> & { createdAt: any } = {
+        const storyToSave: Omit<Story, 'id' | 'createdAt'> & { createdAt: any, authorId: string } = {
           title: values.title,
           content: firstPageText, 
           author: authorName,
@@ -201,15 +215,16 @@ export default function CreateStoryClientPage() {
           subject: values.subject,
           language: values.language,
           theme: theme || "General",
-          imageUrl: finalImageUrl, // Use the download URL from Storage
+          imageUrl: finalImageUrl, // This will be null for now
           createdAt: serverTimestamp(),
+          upvotes: 0,
         };
 
         await addDoc(collection(db, "stories"), storyToSave);
 
         toast({
             title: "Story Shared!",
-            description: "Your story has been successfully added to the library.",
+            description: "Your story has been successfully added to the library (image upload bypassed).",
         });
 
         // Reset forms and state
@@ -221,21 +236,21 @@ export default function CreateStoryClientPage() {
         setTranslatedStory(null);
 
       } catch (error) {
-        setIsUploadingImage(false);
+        // setIsUploadingImage(false); // Commented out for now
         console.error("Error sharing story:", error);
         let description = "Could not share your story. Please try again.";
-        if (error instanceof Error && error.message.includes('storage/unauthorized')) {
-            description = "Image upload failed: You don't have permission to upload to storage. Check Firebase Storage rules.";
-        } else if (error instanceof Error && error.message.includes('longer than 1048487 bytes')) {
-            description = "Image is too large to store directly. This should have been uploaded to storage.";
-        }
+        // if (error instanceof Error && error.message.includes('storage/unauthorized')) { // Storage error handling not relevant now
+        //     description = "Image upload failed: You don't have permission to upload to storage. Check Firebase Storage rules.";
+        // } else if (error instanceof Error && error.message.includes('longer than 1048487 bytes')) {
+        //     description = "Image is too large to store directly. This should have been uploaded to storage.";
+        // }
         toast({ variant: "destructive", title: "Sharing Failed", description });
       }
     });
   }
 
   return (
-    <div className="space-y-8 max-w-3xl w-full">
+    <div className="space-y-8 max-w-3xl">
       <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Let's Brainstorm your story</CardTitle>
@@ -372,7 +387,7 @@ export default function CreateStoryClientPage() {
                 </div>
               </div>
 
-              <Button onClick={handleGetAiImage} variant="outline" size="lg" className="w-full bg-background/50" disabled={isImageGenerating || isSharingLoading || isUploadingImage}>
+              <Button onClick={handleGetAiImage} variant="outline" size="lg" className="w-full bg-background/50" disabled={isImageGenerating || isSharingLoading }>
                 {isImageGenerating ? (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 ) : (
@@ -384,7 +399,7 @@ export default function CreateStoryClientPage() {
           </Card>
       )}
 
-      {firstPageImageUrl && (
+      {firstPageImageUrl && ( // Only show this card if an image (even if just a data URI) exists
         <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
           <CardHeader>
             <CardTitle className="text-2xl font-bold flex items-center">
@@ -397,14 +412,25 @@ export default function CreateStoryClientPage() {
               <div>
                 <h4 className="font-semibold text-md mb-1">Page 1 Preview:</h4>
                 <div className="aspect-video w-full bg-muted/30 rounded-md flex items-center justify-center border border-foreground/30 overflow-hidden mb-2">
-                  <Image
-                    src={firstPageImageUrl} // This will show the data URI before upload, or download URL after
-                    alt="Preview of generated story illustration"
-                    width={600} 
-                    height={338} 
-                    className="object-contain w-full h-full"
-                    data-ai-hint="story preview child"
-                  />
+                  {firstPageImageUrl.startsWith('data:image') ? (
+                     <Image
+                        src={firstPageImageUrl} 
+                        alt="Preview of generated story illustration"
+                        width={600} 
+                        height={338} 
+                        className="object-contain w-full h-full"
+                        data-ai-hint="story preview child"
+                      />
+                  ) : (
+                     <Image
+                        src={firstPageImageUrl} // Assumes it's a placeholder URL if not a data URI
+                        alt="Story illustration placeholder"
+                        width={600}
+                        height={338}
+                        className="object-contain w-full h-full"
+                        data-ai-hint="story placeholder child"
+                      />
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground bg-background/50 p-3 rounded-md whitespace-pre-wrap">
                   {pageContentForm.getValues("firstPageText") || "No text entered for this page."}
@@ -477,13 +503,13 @@ export default function CreateStoryClientPage() {
                     )}
                   />
                 </div>
-                 <Button type="submit" className="w-full" disabled={isSharingLoading || isImageGenerating || isUploadingImage}>
-                  {isSharingLoading || isUploadingImage ? (
+                 <Button type="submit" className="w-full" disabled={isSharingLoading || isImageGenerating }>
+                  {isSharingLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
                     <Share2 className="mr-2 h-4 w-4" />
                   )}
-                  {isUploadingImage ? "Uploading Image..." : isSharingLoading ? "Sharing..." : "Share to Library"}
+                  {isSharingLoading ? "Sharing..." : "Share to Library"}
                 </Button>
               </form>
             </Form>
@@ -522,7 +548,7 @@ export default function CreateStoryClientPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={isTranslationLoading || isImageGenerating || isSharingLoading || isUploadingImage} className="w-full md:w-auto">
+                <Button type="submit" disabled={isTranslationLoading || isImageGenerating || isSharingLoading } className="w-full md:w-auto">
                   {isTranslationLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <LanguagesIcon className="mr-2 h-4 w-4" /> Translate Story
                 </Button>
@@ -540,3 +566,4 @@ export default function CreateStoryClientPage() {
     </div>
   );
 }
+
