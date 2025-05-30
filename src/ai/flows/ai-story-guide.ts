@@ -57,10 +57,21 @@ const storyAssistanceFlow = ai.defineFlow(
     outputSchema: StoryAssistanceOutputSchema,
   },
   async input => {
-    const {output} = await storyAssistancePrompt(input);
-    if (!output) {
-      throw new Error("The AI model did not return a valid response for story assistance.");
+    try {
+      const {output} = await storyAssistancePrompt(input);
+      if (!output) {
+        console.error("StoryAssistanceFlow: AI model returned no output (null or undefined) for input:", input);
+        throw new Error("The AI model did not return a valid response for story assistance. Output was empty.");
+      }
+      // The Zod schema validation on the prompt's output will handle structural mismatches.
+      return output;
+    } catch (flowError) {
+      // Log the detailed error on the server side for better debugging
+      console.error(`Error in storyAssistanceFlow when processing input: ${JSON.stringify(input)}`, flowError);
+      // Re-throw the error. The client-side catch block will handle displaying a user-friendly message.
+      // If flowError is already an Error instance with a good message, that message will be used by the client.
+      // If it's a generic error, the client will show its standard fallback.
+      throw flowError; 
     }
-    return output;
   }
 );
