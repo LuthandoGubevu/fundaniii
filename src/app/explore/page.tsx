@@ -2,43 +2,43 @@
 "use client";
 
 import type { UserProfile } from "@/lib/types";
-import { db } from "@/lib/firebase"; // Removed auth as it's not directly used in getAllUsers
+import { db } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy, limit, Timestamp } from "firebase/firestore";
 import UserCard from "@/components/explore/UserCard";
-import { Compass, Users, Loader2 } from "lucide-react"; // Added Loader2
+import { Compass, Users, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast"; // Added useToast import
 
 async function getAllUsers(): Promise<UserProfile[]> {
   try {
     const usersRef = collection(db, "users");
-    // Consider adding pagination for large numbers of users
-    const q = query(usersRef, orderBy("createdAt", "desc"), limit(50)); // Example limit
+    const q = query(usersRef, orderBy("createdAt", "desc"), limit(50));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => {
       const data = doc.data();
-      // Ensure createdAt is consistently handled, defaulting if necessary
       const createdAt = data.createdAt instanceof Timestamp 
                         ? data.createdAt.toDate().toISOString() 
                         : (typeof data.createdAt?.toDate === 'function' ? data.createdAt.toDate().toISOString() : new Date().toISOString());
       return { 
         uid: doc.id, 
         ...data,
-        // Ensure counts default to 0 if not present
         followersCount: data.followersCount || 0,
         followingCount: data.followingCount || 0,
-        createdAt // Add createdAt to the returned object
+        createdAt
       } as UserProfile;
     });
   } catch (error) {
     console.error("Error fetching users for explore page:", error);
-    return []; // Return empty array on error
+    // Re-throw the error to be caught by the calling useEffect
+    throw error;
   }
 }
 
 export default function ExplorePage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast(); // Initialize useToast
 
   useEffect(() => {
     async function fetchUsers() {
@@ -46,15 +46,24 @@ export default function ExplorePage() {
       try {
         const fetchedUsers = await getAllUsers();
         setUsers(fetchedUsers);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch users for explore page:", error);
-        // Optionally, set an error state and display an error message
+        let errorDesc = "Could not fetch users. Please try again later.";
+        if (error.code === "permission-denied" || (error.message && error.message.toLowerCase().includes("insufficient permissions"))) {
+          errorDesc = "Failed to load users due to Firestore permissions. Please check your Firestore Security Rules to ensure authenticated users can read the 'users' collection.";
+        }
+        toast({
+          variant: "destructive",
+          title: "Error Loading Users",
+          description: errorDesc,
+          duration: 9000,
+        });
       } finally {
         setIsLoading(false);
       }
     }
     fetchUsers();
-  }, []);
+  }, [toast]); // Add toast to dependency array
 
   return (
     <div className="w-full max-w-5xl mx-auto p-4 md:p-6 lg:p-8 space-y-8">

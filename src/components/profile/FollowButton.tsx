@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useTransition } from 'react';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, deleteDoc, updateDoc, increment, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, updateDoc, increment, serverTimestamp, writeBatch, onSnapshot } from 'firebase/firestore';
 import type { User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { UserPlus, UserCheck, Loader2 } from 'lucide-react';
@@ -16,39 +16,46 @@ interface FollowButtonProps {
 export default function FollowButton({ targetUserId }: FollowButtonProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // For initial status check
+  const [isLoading, setIsLoading] = useState(true);
   const [isProcessingFollow, startFollowTransition] = useTransition();
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       setCurrentUser(user);
+      if (!user) {
+        setIsFollowing(false);
+        setIsLoading(false);
+      }
     });
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
 
   useEffect(() => {
     if (!currentUser || !targetUserId || currentUser.uid === targetUserId) {
       setIsLoading(false);
+      setIsFollowing(false); // Ensure isFollowing is false if no current user or it's their own profile
       return;
     }
 
     setIsLoading(true);
     const followingDocRef = doc(db, "users", currentUser.uid, "following", targetUserId);
-    const unsubscribe = getDoc(followingDocRef)
-      .then(docSnap => {
-        setIsFollowing(docSnap.exists());
-      })
-      .catch(error => {
-        console.error("Error checking follow status:", error);
-        // Potentially show a toast or handle error if needed
-      })
-      .finally(() => {
-        setIsLoading(false);
+    
+    const unsubscribeFirestore = onSnapshot(followingDocRef, (docSnap) => {
+      setIsFollowing(docSnap.exists());
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Error checking follow status:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not check follow status.",
       });
-    // No need to return an unsubscribe function from getDoc promise chain.
-    // If using onSnapshot, you would return its unsubscribe function.
-  }, [currentUser, targetUserId]);
+      setIsLoading(false);
+    });
+    
+    return () => unsubscribeFirestore();
+  }, [currentUser, targetUserId, toast]);
 
   const handleFollowToggle = async () => {
     if (!currentUser) {
@@ -56,7 +63,7 @@ export default function FollowButton({ targetUserId }: FollowButtonProps) {
       return;
     }
     if (currentUser.uid === targetUserId) {
-      toast({ variant: "destructive", title: "Cannot follow yourself" });
+      toast({ variant: "destructive", title: "Action Not Allowed", description: "You cannot follow yourself." });
       return;
     }
     if (isProcessingFollow) return;
@@ -76,23 +83,23 @@ export default function FollowButton({ targetUserId }: FollowButtonProps) {
           batch.update(targetUserRef, { followersCount: increment(-1) });
           
           await batch.commit();
-          setIsFollowing(false);
+          // setIsFollowing(false); // Optimistic update handled by onSnapshot
           toast({ title: "Unfollowed", description: `You are no longer following this user.` });
         } else { // Follow
-          batch.set(currentUserFollowingDocRef, { followedAt: serverTimestamp() });
-          batch.set(targetUserFollowerDocRef, { followedAt: serverTimestamp() });
+          batch.set(currentUserFollowingDocRef, { followedAt: serverTimestamp(), targetName: "Unknown User" /* Consider fetching target user's name */ });
+          batch.set(targetUserFollowerDocRef, { followedAt: serverTimestamp(), followerName: currentUser.displayName || "Anonymous" });
           batch.update(currentUserRef, { followingCount: increment(1) });
           batch.update(targetUserRef, { followersCount: increment(1) });
 
           await batch.commit();
-          setIsFollowing(true);
+          // setIsFollowing(true); // Optimistic update handled by onSnapshot
           toast({ title: "Followed!", description: `You are now following this user.` });
         }
       } catch (error: any) {
         console.error("Error toggling follow:", error);
         let errorDesc = "Could not update follow status. Please try again.";
-        if (error.code === "permission-denied") {
-          errorDesc = "Follow action failed due to Firestore permissions. Ensure rules allow managing follow subcollections and updating counts.";
+        if (error.code === "permission-denied" || (error.message && error.message.toLowerCase().includes("insufficient permissions"))) {
+          errorDesc = "Follow action failed due to Firestore permissions. Please check your Firestore Security Rules to ensure you can update 'following' subcollections and user 'followersCount'/'followingCount'.";
         }
         toast({ variant: "destructive", title: "Follow Action Failed", description: errorDesc, duration: 9000 });
       }
@@ -100,17 +107,17 @@ export default function FollowButton({ targetUserId }: FollowButtonProps) {
   };
 
   if (isLoading) {
-    return <Button variant="outline" disabled><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading...</Button>;
+    return <Button variant="outline" disabled className="w-full max-w-xs mx-auto"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading...</Button>;
   }
 
   if (!currentUser || currentUser.uid === targetUserId) {
-    return null; // Don't show button if no current user or it's their own profile
+    return null; 
   }
 
   return (
     <Button 
       onClick={handleFollowToggle} 
-      disabled={isProcessingFollow}
+      disabled={isProcessingFollow || isLoading}
       variant={isFollowing ? "outline" : "default"}
       className="w-full max-w-xs mx-auto"
     >

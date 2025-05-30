@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 const statusIcons: Record<DashboardStoryItem["status"], JSX.Element> = {
   Draft: <Edit3 className="h-4 w-4 text-yellow-500" />,
   "In Review": <History className="h-4 w-4 text-blue-500" />,
-  Published: <CheckCircle2 className="h-4 w-4 text-green-500" />, // Changed from Shared to Published for consistency
+  Published: <CheckCircle2 className="h-4 w-4 text-green-500" />,
   Shared: <CheckCircle2 className="h-4 w-4 text-green-500" />,
 };
 
@@ -41,7 +41,7 @@ export default function StoryProgressTracker() {
 
   useEffect(() => {
     if (!currentUser) {
-      setIsLoading(false); // No user, so not loading stories for anyone
+      setIsLoading(false);
       return;
     }
 
@@ -63,7 +63,6 @@ export default function StoryProgressTracker() {
               id: doc.id,
               title: data.title || "Untitled Story",
               thumbnailUrl: data.imageUrl || "https://placehold.co/150x100.png?text=Story",
-              // Ensure status is one of the defined types, default to Draft if missing or invalid
               status: ["Draft", "In Review", "Published", "Shared"].includes(data.status) ? data.status : "Draft",
             } as DashboardStoryItem;
           }
@@ -71,14 +70,19 @@ export default function StoryProgressTracker() {
         setStories(fetchedStories);
         setIsLoading(false);
       },
-      (error) => {
+      (error: any) => {
         console.error("Error fetching user stories for progress tracker:", error);
+        let errorDesc = "Could not fetch your stories. Please try again later.";
+        if (error.code === "permission-denied" || (error.message && error.message.toLowerCase().includes("insufficient permissions"))) {
+          errorDesc = "Failed to load stories due to Firestore permissions. Please check your Firestore Security Rules for reading the 'stories' collection.";
+        }
         toast({
           variant: "destructive",
           title: "Error Loading Your Stories",
-          description: "Could not fetch your stories. Please try again later.",
+          description: errorDesc,
+          duration: 9000,
         });
-        setStories([]); // Clear stories on error
+        setStories([]);
         setIsLoading(false);
       }
     );
@@ -149,3 +153,4 @@ export default function StoryProgressTracker() {
     </Card>
   );
 }
+
