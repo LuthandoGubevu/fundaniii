@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Home, PlusSquare, Library, Settings, LogOut, Brain } from "lucide-react"; // Added Brain
+import { Home, PlusSquare, Library, Settings, LogOut, Brain, Compass } from "lucide-react"; // Added Compass
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -23,8 +23,9 @@ import { Button } from "@/components/ui/button";
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/create-story", label: "Start a Story", icon: PlusSquare },
-  { href: "/ask-question", label: "My Study Buddy", icon: Brain }, // Changed label and icon
+  { href: "/ask-question", label: "My Study Buddy", icon: Brain },
   { href: "/story-library", label: "Story Library", icon: Library },
+  { href: "/explore", label: "Explore", icon: Compass }, // New Explore item
 ];
 
 export function AppSidebar() {
@@ -89,6 +90,7 @@ export function AppSidebar() {
             <SidebarMenuItem>
                 <SidebarMenuButton 
                     tooltip={{ children: "Settings", side: "right", align: "center" }}
+                     onClick={() => toast({ title: "Coming Soon!", description: "Settings page is under development."})}
                 >
                     <Settings/>
                     <span>Settings</span>
