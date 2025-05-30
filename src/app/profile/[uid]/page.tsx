@@ -1,28 +1,45 @@
 
+"use client"; // Convert to Client Component
+
 import type { UserProfile, Story } from "@/lib/types";
 import { db, auth } from "@/lib/firebase";
+import type { User } from "firebase/auth";
 import { doc, getDoc, collection, query, where, getDocs, orderBy, Timestamp } from "firebase/firestore";
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation'; // useRouter for potential redirects
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import StoryCard from "@/components/story/StoryCard";
-import FollowButton from "@/components/profile/FollowButton"; // We will create this
-import { Users, BookOpenCheck, Heart, ArrowLeft } from "lucide-react";
+import FollowButton from "@/components/profile/FollowButton";
+import { Users, BookOpenCheck, Heart, ArrowLeft, Loader2, UserCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 async function getUserProfile(uid: string): Promise<UserProfile | null> {
   const userRef = doc(db, "users", uid);
   const userSnap = await getDoc(userRef);
   if (userSnap.exists()) {
-    return { uid: userSnap.id, ...userSnap.data() } as UserProfile;
+    const data = userSnap.data();
+     const createdAt = data.createdAt instanceof Timestamp 
+                        ? data.createdAt.toDate().toISOString() 
+                        : (typeof data.createdAt?.toDate === 'function' ? data.createdAt.toDate().toISOString() : new Date().toISOString());
+    return { 
+        uid: userSnap.id, 
+        ...data,
+        followersCount: data.followersCount || 0,
+        followingCount: data.followingCount || 0,
+        createdAt
+      } as UserProfile;
   }
   return null;
 }
 
 async function getUserStories(uid: string): Promise<Story[]> {
   const storiesRef = collection(db, "stories");
-  const q = query(storiesRef, where("authorId", "==", uid), where("status", "==", "Published"), orderBy("createdAt", "desc"));
+  // Removed status filter to show all stories by author on their profile for now
+  // Consider adding filter options for Draft/Published if needed
+  const q = query(storiesRef, where("authorId", "==", uid), orderBy("createdAt", "desc"));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => {
     const data = doc.data();
@@ -33,18 +50,130 @@ async function getUserStories(uid: string): Promise<Story[]> {
   });
 }
 
-// Note: We can't reliably get the *currently signed-in* user's ID in a Server Component
-// that needs to be dynamic per request without involving client components or middleware.
-// The FollowButton will handle its own auth state to determine if current user can follow.
 
-export default async function ProfilePage({ params }: { params: { uid: string } }) {
-  const profile = await getUserProfile(params.uid);
-  
-  if (!profile) {
-    notFound();
+export default function ProfilePage({ params }: { params: { uid: string } }) {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [stories, setStories] = useState<Story[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    async function fetchData() {
+      if (!currentUser && params.uid) { 
+        // Check if user must be logged in to view ANY profile based on rules
+        // If your rules are `allow read: if request.auth != null;` for /users/{userId},
+        // then this fetch will fail if currentUser is null.
+        // We'll gate the fetch on currentUser being available.
+        setIsLoading(false);
+        return;
+      }
+      if (!params.uid) {
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const userProfile = await getUserProfile(params.uid);
+        if (!userProfile) {
+          toast({ variant: "destructive", title: "Profile Not Found", description: "This user profile does not exist or you may not have permission to view it."});
+          // Consider redirecting to a 404 page or Explore page instead of Next's notFound() for client components
+          // router.push('/explore'); // Example redirect
+          setProfile(null); // Ensure profile is null if not found
+          setStories([]);
+          setIsLoading(false);
+          return;
+        }
+        setProfile(userProfile);
+        const userStories = await getUserStories(params.uid);
+        setStories(userStories);
+      } catch (error: any) {
+        console.error("Error fetching profile data:", error);
+        let errorDesc = "Could not load profile. Please try again later.";
+        if (error.code === "permission-denied" || (error.message && error.message.toLowerCase().includes("insufficient permissions"))) {
+            errorDesc = "Failed to load profile due to Firestore permissions. Please ensure you are logged in if required by security rules, and that rules allow reading this profile.";
+        }
+        toast({ variant: "destructive", title: "Profile Load Error", description: errorDesc, duration: 9000 });
+        setProfile(null);
+        setStories([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    // Fetch data only if currentUser state has been resolved (even if it's null, if rules allow public reads)
+    // OR if currentUser is truthy (user logged in, satisfying rules that require auth)
+    if (currentUser !== undefined && params.uid) { // Ensure auth state is resolved before fetching
+        fetchData();
+    } else if (!params.uid) {
+        setIsLoading(false); // No UID, nothing to fetch
+    }
+
+  }, [params.uid, currentUser, toast, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
   }
 
-  const stories = await getUserStories(params.uid);
+  if (!currentUser && !isLoading && params.uid) { // User needs to be logged in to view profiles
+    return (
+      <div className="w-full max-w-md mx-auto p-4 md:p-6 lg:p-8 text-center">
+        <Card className="shadow-xl bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80 p-8">
+          <CardHeader>
+             <UserCircle className="h-12 w-12 text-primary mx-auto mb-3" />
+            <CardTitle className="text-2xl font-bold text-foreground">View Profile</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground text-lg mb-4">Please sign in to view user profiles.</p>
+            <Button asChild className="mt-4" size="lg">
+              <Link href="/auth/signin">Sign In</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
+  if (!profile && !isLoading) {
+    return (
+        <div className="w-full max-w-4xl mx-auto p-4 md:p-6 lg:p-8 text-center">
+            <Card className="shadow-xl bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80 p-8">
+                <CardHeader>
+                    <UserCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
+                    <CardTitle className="text-2xl font-bold text-destructive">Profile Not Found</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground text-lg mb-6">
+                        The profile you are looking for does not exist or could not be loaded.
+                    </p>
+                    <Button asChild variant="outline">
+                        <Link href="/explore">
+                            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Explore
+                        </Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
+  
+  // Ensure profile is not null before trying to access its properties
+  if (!profile) { 
+    return <div className="text-center py-10"><p>Loading profile or profile not available.</p></div>;
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 md:p-6 lg:p-8 space-y-8">
@@ -87,14 +216,13 @@ export default async function ProfilePage({ params }: { params: { uid: string } 
               <p className="text-sm text-muted-foreground">Followers</p>
             </div>
             <div className="col-span-2 md:col-span-1">
-              <Heart className="h-8 w-8 mx-auto text-primary mb-1" />
+              <Heart className="h-8 w-8 mx-auto text-primary mb-1" /> {/* Consider changing icon for 'Following' */}
               <p className="text-2xl font-bold text-foreground">{profile.followingCount || 0}</p>
               <p className="text-sm text-muted-foreground">Following</p>
             </div>
           </div>
         </CardContent>
         <CardContent className="p-6 text-center">
-          {/* FollowButton will check auth status internally */}
           <FollowButton targetUserId={profile.uid} />
         </CardContent>
       </Card>
@@ -118,17 +246,3 @@ export default async function ProfilePage({ params }: { params: { uid: string } 
     </div>
   );
 }
-
-export async function generateMetadata({ params }: { params: { uid: string } }) {
-  const profile = await getUserProfile(params.uid);
-  if (!profile) {
-    return {
-      title: "Profile Not Found | Fundanii Ai",
-    };
-  }
-  return {
-    title: `${profile.displayName || profile.name}'s Profile | Fundanii Ai`,
-    description: `Explore stories and profile of ${profile.displayName || profile.name}.`,
-  };
-}
-
