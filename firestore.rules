@@ -1,0 +1,74 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{userId} {
+      // Allow authenticated users to read any user's profile
+      // (needed for profile pages, author names, follower counts on other profiles)
+      allow read: if request.auth != null;
+
+      // Allow a user to create their own document during signup
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Allow a user to delete their own document (if this functionality is desired)
+      allow delete: if request.auth != null && request.auth.uid == userId;
+
+      // Allow updates under specific conditions:
+      allow update: if request.auth != null &&
+                       (
+                         // Condition 1: The user is updating their own document.
+                         // They can update fields like displayName, avatarUrl, school, grade, email, and their own followingCount.
+                         (request.auth.uid == userId &&
+                           request.resource.data.diff(resource.data).affectedKeys().hasAny(['displayName', 'avatarUrl', 'school', 'grade', 'name', 'surname', 'email', 'followingCount'])) ||
+                         // Condition 2: Any authenticated user is updating ONLY the followersCount of this {userId}'s document,
+                         // AND the update is strictly an increment or decrement by 1.
+                         // This is for client-side updates to another user's follower count.
+                         // For enhanced security and atomicity, consider Cloud Functions for this.
+                         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followersCount']) &&
+                           (request.resource.data.followersCount == resource.data.followersCount + 1 ||
+                            request.resource.data.followersCount == resource.data.followersCount - 1)
+                         )
+                       );
+    }
+
+    // Subcollection for who a user is FOLLOWING
+    // /users/{userId}/following/{targetUserId}
+    match /users/{userId}/following/{targetUserId} {
+      // The user {userId} can manage their own "following" list (read, add, remove entries)
+      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Subcollection for who FOLLOWS a user
+    // /users/{userId}/followers/{followerUid}
+    match /users/{userId}/followers/{followerUid} {
+      // The user {followerUid} (the one doing the following) can manage their entry in the target user's "followers" list
+      allow read, write, delete: if request.auth != null && request.auth.uid == followerUid;
+    }
+
+    // Stories Collection (/stories/{storyId})
+    match /stories/{storyId} {
+      // Allow anyone to read stories (adjust to 'if request.auth != null;' if stories should be private to logged-in users)
+      allow read: if true;
+
+      // Allow authenticated users to create stories,
+      // ensuring the authorId in the story data matches their own UID.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId;
+
+      // Allow specific updates:
+      // 1. Any authenticated user can update ONLY the 'upvotes' and 'likedBy' fields (for liking/unliking).
+      // 2. The author of the story can update any other field of their own story (e.g., title, content).
+      allow update: if request.auth != null && (
+        (request.resource.data.diff(resource.data).affectedKeys().hasAll(['upvotes', 'likedBy']) &&
+         (request.resource.data.upvotes == resource.data.upvotes + 1 || request.resource.data.upvotes == resource.data.upvotes - 1)
+        ) ||
+        (resource.data.authorId == request.auth.uid) // Author can update their own story's other fields
+      );
+
+      // Allow story authors to delete their own stories
+      allow delete: if request.auth != null && resource.data.authorId == request.auth.uid;
+    }
+  }
+}
+
