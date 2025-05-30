@@ -34,6 +34,9 @@ export default function RootLayout({
           <div className="cloud one"></div>
           <div className="cloud two"></div>
           <div className="cloud three"></div>
+          <div className="bird bird-one"></div>
+          <div className="bird bird-two"></div>
+          <div className="bird bird-three"></div>
           <div className="landscape">
             {/* Mountain divs removed */}
             <div className="hill one"></div>

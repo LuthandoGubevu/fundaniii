@@ -111,6 +111,7 @@ html {
   opacity: 0.85;
   animation: driftCloud 20s linear infinite;
   will-change: transform;
+  z-index: 5; /* Ensure clouds can be above some birds */
 }
 
 .cloud.one {
@@ -156,6 +157,89 @@ html {
     transform: translateX(calc(100vw + 200px)); /* Ensure it moves completely off-screen */
   }
 }
+
+.bird {
+  position: absolute;
+  width: 20px; /* Width of the bird body */
+  height: 3px; /* Thickness of the bird body */
+  background-color: #333; /* Dark color for silhouette */
+  border-radius: 2px;
+  animation: flyAcross 30s linear infinite, flapWings 0.5s linear infinite alternate;
+  will-change: transform;
+  z-index: 6; /* Ensure birds are above clouds and hills but below sun if needed */
+}
+
+.bird::before, .bird::after {
+  content: '';
+  position: absolute;
+  width: 12px; /* Wing length */
+  height: 2px; /* Wing thickness */
+  background-color: #333;
+  border-radius: 2px;
+  top: 0px;
+}
+
+.bird::before {
+  left: 3px;
+  transform-origin: 0% 50%;
+  transform: rotate(-35deg); /* Angle of left wing */
+}
+
+.bird::after {
+  right: 3px;
+  transform-origin: 100% 50%;
+  transform: rotate(35deg); /* Angle of right wing */
+}
+
+.bird-one {
+  top: 15%;
+  left: -30px; /* Start off-screen */
+  animation-delay: 0s;
+  animation-duration: 25s; /* Faster bird */
+}
+
+.bird-two {
+  top: 25%;
+  left: -50px; /* Start off-screen */
+  animation-delay: 5s;
+  animation-duration: 35s; /* Slower bird */
+}
+
+.bird-three {
+  top: 10%;
+  left: -40px; /* Start off-screen */
+  animation-delay: 10s;
+  animation-duration: 30s;
+}
+
+
+@keyframes flyAcross {
+  0% {
+    transform: translateX(0) translateY(0);
+  }
+  25% {
+    transform: translateX(calc(25vw + 50px)) translateY(-10px); /* Slight upward movement */
+  }
+  50% {
+    transform: translateX(calc(50vw + 100px)) translateY(5px); /* Slight downward movement */
+  }
+  75% {
+     transform: translateX(calc(75vw + 150px)) translateY(-5px);
+  }
+  100% {
+    transform: translateX(calc(100vw + 200px)) translateY(0); /* Ensure it moves completely off-screen */
+  }
+}
+
+@keyframes flapWings {
+  0% {
+    transform: scaleY(1);
+  }
+  100% {
+    transform: scaleY(0.8); /* Simulates wings moving down */
+  }
+}
+
 
 .landscape {
   position: absolute;
