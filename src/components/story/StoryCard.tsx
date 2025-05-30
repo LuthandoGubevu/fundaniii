@@ -3,15 +3,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Story, UserProfile } from "@/lib/types";
-import { ArrowRight, UserCircle, CalendarDays, Tag, Heart, MessageCircle, UserPlus, UserCheck, Loader2 } from "lucide-react";
+import { ArrowRight, UserCircle, CalendarDays, Heart, Loader2, UserPlus, UserCheck } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { useState, useTransition, useEffect } from "react";
 import { db, auth } from "@/lib/firebase";
-import { doc, updateDoc, increment, getDoc, arrayUnion, arrayRemove, onSnapshot, Timestamp } from "firebase/firestore";
+import { doc, updateDoc, increment, getDoc, arrayUnion, arrayRemove, onSnapshot, Timestamp, writeBatch, deleteDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import type { User } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -44,7 +44,7 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
   const { toast } = useToast();
   const [currentUser, setCurrentUser] = useState<User | null>(auth.currentUser);
   const [isLiked, setIsLiked] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowingAuthor, setIsFollowingAuthor] = useState(false);
   const [isLikingInProgress, startLikingTransition] = useTransition();
   const [isFollowInProgress, startFollowTransition] = useTransition();
   const [currentUpvotes, setCurrentUpvotes] = useState(story.upvotes || 0);
@@ -66,33 +66,26 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
     setCurrentUpvotes(story.upvotes || 0);
   }, [currentUser, story.likedBy, story.upvotes]);
 
-
   useEffect(() => {
     if (!currentUser || !story.authorId || currentUser.uid === story.authorId) {
-      setIsFollowing(false); 
+      setIsFollowingAuthor(false); 
       return;
     }
-
-    const currentUserDocRef = doc(db, "users", currentUser.uid);
-    const unsubscribe = onSnapshot(currentUserDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const userData = docSnap.data() as UserProfile;
-        setIsFollowing(userData.following?.includes(story.authorId!) || false);
-      } else {
-        setIsFollowing(false);
-      }
+    // Check if current user is following the story's author by checking the subcollection
+    const followingDocRef = doc(db, "users", currentUser.uid, "following", story.authorId);
+    const unsubscribe = onSnapshot(followingDocRef, (docSnap) => {
+      setIsFollowingAuthor(docSnap.exists());
     }, (error) => {
-      console.error("Error fetching current user's follow status:", error);
-      setIsFollowing(false);
+      console.error("Error checking follow status:", error);
+      setIsFollowingAuthor(false);
     });
-
     return () => unsubscribe();
   }, [currentUser, story.authorId]);
 
 
   const handleLikeToggle = async () => {
     if (!currentUser) {
-      toast({ variant: "destructive", title: "Authentication Required", description: "You need to be logged in to like or unlike a story." });
+      toast({ variant: "destructive", title: "Authentication Required", description: "You need to be logged in to like a story." });
       return;
     }
     if (isLikingInProgress) return;
@@ -102,33 +95,30 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
 
     const storyRef = doc(db, "stories", story.id);
     const newOptimisticLikes = isLiked ? currentUpvotes - 1 : currentUpvotes + 1;
-    const newIsLiked = !isLiked;
+    const newIsLikedState = !isLiked;
 
-    // Optimistic UI update
     setCurrentUpvotes(newOptimisticLikes);
-    setIsLiked(newIsLiked);
-    if (onLikeUpdated) onLikeUpdated(story.id, newOptimisticLikes, newIsLiked);
+    setIsLiked(newIsLikedState);
+    if (onLikeUpdated) onLikeUpdated(story.id, newOptimisticLikes, newIsLikedState);
 
     startLikingTransition(async () => {
       try {
-        if (newIsLiked) { // User is liking
+        if (newIsLikedState) {
           await updateDoc(storyRef, { 
             upvotes: increment(1),
             likedBy: arrayUnion(currentUser.uid)
           });
-        } else { // User is unliking
+        } else {
           await updateDoc(storyRef, { 
             upvotes: increment(-1),
             likedBy: arrayRemove(currentUser.uid)
           });
         }
-        // No toast on success for likes/unlikes to reduce noise, UI update is enough.
       } catch (error: any) {
         console.error("Error liking/unliking story:", error);
-        // Revert optimistic update on error
-        setCurrentUpvotes(currentUpvotes);
-        setIsLiked(isLiked);
-        if (onLikeUpdated) onLikeUpdated(story.id, currentUpvotes, isLiked);
+        setCurrentUpvotes(story.upvotes || 0); // Revert
+        setIsLiked(story.likedBy?.includes(currentUser.uid) || false); // Revert
+        if (onLikeUpdated) onLikeUpdated(story.id, story.upvotes || 0, story.likedBy?.includes(currentUser.uid) || false);
         
         let errorDesc = "Could not update like status. Please try again.";
         if (error.code === "permission-denied") {
@@ -148,26 +138,35 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
     if (isFollowInProgress) return;
 
     startFollowTransition(async () => {
-      const currentUserDocRef = doc(db, "users", currentUser.uid);
-      const authorUserDocRef = doc(db, "users", story.authorId!);
+      const batch = writeBatch(db);
+      const currentUserRef = doc(db, "users", currentUser.uid);
+      const targetUserRef = doc(db, "users", story.authorId!);
+      const followingDocRef = doc(currentUserRef, "following", story.authorId!);
+      const followerDocRef = doc(targetUserRef, "followers", currentUser.uid);
 
       try {
-        if (isFollowing) { // Unfollow
-          await updateDoc(currentUserDocRef, { following: arrayRemove(story.authorId) });
-          await updateDoc(authorUserDocRef, { followersCount: increment(-1) });
-          setIsFollowing(false); 
+        if (isFollowingAuthor) { // Unfollow
+          batch.delete(followingDocRef);
+          batch.delete(followerDocRef);
+          batch.update(currentUserRef, { followingCount: increment(-1) });
+          batch.update(targetUserRef, { followersCount: increment(-1) });
+          await batch.commit();
+          setIsFollowingAuthor(false); 
           toast({ title: "Unfollowed", description: `You are no longer following ${story.author}.` });
         } else { // Follow
-          await updateDoc(currentUserDocRef, { following: arrayUnion(story.authorId) });
-          await updateDoc(authorUserDocRef, { followersCount: increment(1) });
-          setIsFollowing(true); 
+          batch.set(followingDocRef, { followedAt: serverTimestamp() });
+          batch.set(followerDocRef, { followedAt: serverTimestamp() });
+          batch.update(currentUserRef, { followingCount: increment(1) });
+          batch.update(targetUserRef, { followersCount: increment(1) });
+          await batch.commit();
+          setIsFollowingAuthor(true); 
           toast({ title: "Followed!", description: `You are now following ${story.author}.` });
         }
       } catch (error: any) {
         console.error("Error toggling follow:", error);
         let errorDesc = "Could not update follow status. Please try again.";
          if (error.code === "permission-denied") {
-          errorDesc = "Follow action failed due to Firestore permissions. Ensure rules allow updating 'following' on your own user doc and 'followersCount' on the author's user doc.";
+          errorDesc = "Follow action failed due to Firestore permissions. Ensure rules allow managing follow subcollections and updating follower/following counts.";
         }
         toast({ variant: "destructive", title: "Follow Action Failed", description: errorDesc, duration: 9000 });
       }
@@ -178,30 +177,41 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
     <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300 bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
       <CardHeader>
         {story.imageUrl && (
-           <Image
-            src={story.imageUrl}
-            alt={story.title}
-            width={300}
-            height={200}
-            className="rounded-t-lg object-cover w-full h-48"
-            data-ai-hint="story illustration"
-          />
+           <Link href={`/story-library/${story.id}`} legacyBehavior>
+             <a>
+                <Image
+                  src={story.imageUrl}
+                  alt={story.title}
+                  width={300}
+                  height={200}
+                  className="rounded-t-lg object-cover w-full h-48"
+                  data-ai-hint="story illustration"
+                />
+              </a>
+           </Link>
         )}
-        <CardTitle className="mt-4 text-xl font-semibold">{story.title}</CardTitle>
+        <CardTitle className="mt-4 text-xl font-semibold">
+            <Link href={`/story-library/${story.id}`} className="hover:underline">{story.title}</Link>
+        </CardTitle>
         <div className="flex items-center text-sm text-muted-foreground">
-          <UserCircle className="w-4 h-4 mr-1.5" /> By {story.author}
+          <UserCircle className="w-4 h-4 mr-1.5" /> 
+          By {story.authorId ? (
+            <Link href={`/profile/${story.authorId}`} className="hover:underline ml-1">{story.author}</Link>
+          ) : (
+            story.author
+          )}
           {currentUser && story.authorId && currentUser.uid !== story.authorId && (
             <Button
               variant="ghost"
               size="sm"
-              className="ml-2 p-1 h-auto"
+              className="ml-2 p-1 h-auto text-xs"
               onClick={handleFollowToggle}
               disabled={isFollowInProgress}
             >
-              {isFollowInProgress ? <Loader2 className="h-4 w-4 animate-spin" /> : (
-                isFollowing ? <UserCheck className="h-4 w-4 text-green-500" /> : <UserPlus className="h-4 w-4 text-primary" />
+              {isFollowInProgress ? <Loader2 className="h-3 w-3 animate-spin" /> : (
+                isFollowingAuthor ? <UserCheck className="h-4 w-4 text-green-500 mr-1" /> : <UserPlus className="h-4 w-4 text-primary mr-1" />
               )}
-              <span className="ml-1 text-xs">{isFollowing ? "Following" : "Follow"}</span>
+              {isFollowingAuthor ? "Following" : "Follow"}
             </Button>
           )}
         </div>

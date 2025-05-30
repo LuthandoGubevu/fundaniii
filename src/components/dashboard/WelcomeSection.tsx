@@ -10,51 +10,57 @@ import { auth, db } from "@/lib/firebase";
 import type { User } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, onSnapshot, doc, getDoc } from "firebase/firestore";
-import { Heart, Users } from "lucide-react"; // Added Users icon
+import { Heart, Users } from "lucide-react";
 
 export default function WelcomeSection() {
-  const [userProfile, setUserProfile] = useState<UserProfile>(dummyUserProfile);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [totalLikes, setTotalLikes] = useState<number>(0);
-  // No need to store followersCount separately, it will be part of userProfile
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setFirebaseUser(currentUser);
       if (currentUser) {
-        // Fetch user profile from Firestore to get followersCount and other details
         const userDocRef = doc(db, "users", currentUser.uid);
         const unsubscribeProfile = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             const fetchedProfile = docSnap.data() as UserProfile;
             setUserProfile({
-              ...dummyUserProfile, // Start with dummy to ensure all fields are present
+              ...dummyUserProfile, // Start with dummy for defaults
               ...fetchedProfile,   // Override with fetched data
-              name: currentUser.displayName || fetchedProfile.name || currentUser.email?.split('@')[0] || "Storyteller",
-              avatarUrl: currentUser.photoURL || fetchedProfile.avatarUrl || `https://placehold.co/100x100.png?text=${(currentUser.displayName || fetchedProfile.name || "S").charAt(0)}`,
+              uid: currentUser.uid,
+              name: fetchedProfile.name || currentUser.displayName || currentUser.email?.split('@')[0] || "Learner",
+              displayName: fetchedProfile.displayName || currentUser.displayName || `${fetchedProfile.name} ${fetchedProfile.surname}` || "Learner",
+              avatarUrl: fetchedProfile.avatarUrl || currentUser.photoURL || `https://placehold.co/100x100.png?text=${(fetchedProfile.name || "L").charAt(0)}`,
             });
           } else {
-            // User exists in Auth but not in Firestore users collection (should not happen with current signup flow)
+            // Fallback if Firestore profile doesn't exist yet (should be rare with current signup)
             setUserProfile({
               ...dummyUserProfile,
-              name: currentUser.displayName || currentUser.email?.split('@')[0] || "Storyteller",
-              avatarUrl: currentUser.photoURL || `https://placehold.co/100x100.png?text=${(currentUser.displayName || "S").charAt(0)}`,
-              followersCount: 0, // Default
+              uid: currentUser.uid,
+              name: currentUser.displayName || currentUser.email?.split('@')[0] || "Learner",
+              displayName: currentUser.displayName || currentUser.email?.split('@')[0] || "Learner",
+              avatarUrl: currentUser.photoURL || `https://placehold.co/100x100.png?text=${(currentUser.displayName || "L").charAt(0)}`,
+              followersCount: 0,
+              followingCount: 0,
             });
           }
         }, (error) => {
             console.error("Error fetching user profile from Firestore:", error);
-            // Fallback if Firestore profile fetch fails
             setUserProfile({
                 ...dummyUserProfile,
-                name: currentUser.displayName || currentUser.email?.split('@')[0] || "Storyteller",
-                avatarUrl: currentUser.photoURL || `https://placehold.co/100x100.png?text=${(currentUser.displayName || "S").charAt(0)}`,
+                uid: currentUser.uid,
+                name: currentUser.displayName || currentUser.email?.split('@')[0] || "Learner",
+                displayName: currentUser.displayName || currentUser.email?.split('@')[0] || "Learner",
+                avatarUrl: currentUser.photoURL || `https://placehold.co/100x100.png?text=${(currentUser.displayName || "L").charAt(0)}`,
+                followersCount: 0,
+                followingCount: 0,
             });
         });
         return () => unsubscribeProfile();
 
       } else {
-        setUserProfile(dummyUserProfile);
+        setUserProfile(null); // Set to null when no user
         setTotalLikes(0);
       }
     });
@@ -82,13 +88,15 @@ export default function WelcomeSection() {
     }
   }, [firebaseUser]);
 
+  const profileToDisplay = userProfile || dummyUserProfile; // Use dummy if userProfile is null
+
   return (
     <Card className="shadow-lg bg-gradient-to-br from-[#2D9CDB] to-[#70C1B3] text-primary-foreground border-primary/50 overflow-hidden">
       <CardContent className="p-6 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
         <div className="relative">
           <Image
-            src={userProfile.avatarUrl || "https://placehold.co/100x100.png?text=Avatar"}
-            alt={userProfile.name || "User Avatar"}
+            src={profileToDisplay.avatarUrl || "https://placehold.co/100x100.png?text=User"}
+            alt={profileToDisplay.displayName || profileToDisplay.name || "User Avatar"}
             width={100}
             height={100}
             className="rounded-full border-4 border-white shadow-md object-cover"
@@ -97,7 +105,7 @@ export default function WelcomeSection() {
         </div>
         <div className="flex-grow text-center sm:text-left">
           <h2 className="text-3xl font-bold text-primary-foreground">
-            Hi, {userProfile.name}!
+            Hi, {profileToDisplay.displayName || profileToDisplay.name}!
           </h2>
           <p className="text-lg text-primary-foreground/90">
             Ready for a new adventure today?
@@ -110,8 +118,8 @@ export default function WelcomeSection() {
                     <span>{totalLikes} Likes</span>
                 </div>
                 <div className="flex items-center space-x-1 px-3 py-1.5 rounded-full bg-white/20 text-primary-foreground font-bold text-lg">
-                    <Users className="h-6 w-6 text-blue-300" /> {/* Changed icon color for differentiation */}
-                    <span>{userProfile.followersCount || 0} Followers</span>
+                    <Users className="h-6 w-6 text-blue-300" />
+                    <span>{profileToDisplay.followersCount || 0} Followers</span>
                 </div>
              </div>
         </div>

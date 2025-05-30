@@ -3,17 +3,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth, db } from "@/lib/firebase"; // Assuming db is exported for Firestore
+import { auth, db } from "@/lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
@@ -52,25 +51,24 @@ export default function SignUpForm() {
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
         const user = userCredential.user;
+        const displayName = `${values.name} ${values.surname}`;
 
-        // Update Firebase Auth profile
         await updateProfile(user, {
-          displayName: `${values.name} ${values.surname}`,
+          displayName: displayName,
         });
 
-        // Store additional user information in Firestore
-        // This is the part that requires Firestore permissions
         await setDoc(doc(db, "users", user.uid), {
           uid: user.uid,
           email: values.email,
           name: values.name,
           surname: values.surname,
+          displayName: displayName,
           school: values.school,
           grade: values.grade,
           createdAt: serverTimestamp(),
-          following: [], 
-          followersCount: 0, 
-          avatarUrl: `https://placehold.co/100x100.png?text=${values.name.charAt(0)}${values.surname.charAt(0)}`, 
+          avatarUrl: `https://placehold.co/100x100.png?text=${values.name.charAt(0)}${values.surname.charAt(0)}`,
+          followersCount: 0,
+          followingCount: 0,
         });
 
         toast({
@@ -92,7 +90,7 @@ export default function SignUpForm() {
                   ) {
           errorMessage = `Account created in Auth, but FAILED TO SAVE USER DETAILS TO DATABASE due to Firestore permissions. 
                           Please check your Firestore Security Rules. 
-                          Ensure the rule 'match /users/{userId} { allow write: if request.auth.uid == userId; }' (or similar) is in place and published. 
+                          Ensure the rule 'match /users/{userId} { allow write: if request.auth.uid == userId; }' (or similar for creating user profiles) is in place and published. 
                           Firebase Error: ${error.message}`;
         } else if (error.message) {
           errorMessage = error.message;
@@ -102,7 +100,7 @@ export default function SignUpForm() {
           variant: "destructive",
           title: "Sign Up Failed",
           description: errorMessage,
-          duration: 10000, // Increased duration for more complex error
+          duration: 10000,
         });
       }
     });
@@ -213,5 +211,3 @@ export default function SignUpForm() {
     </Card>
   );
 }
-
-    

@@ -11,8 +11,6 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { notFound } from 'next/navigation';
 
-// Removed generateStaticParams as this page will be dynamically rendered
-
 async function getStory(id: string): Promise<Story | undefined> {
   try {
     const storyRef = doc(db, "stories", id);
@@ -20,13 +18,13 @@ async function getStory(id: string): Promise<Story | undefined> {
 
     if (storySnap.exists()) {
       const data = storySnap.data();
-      // Convert Firestore Timestamp to ISO string
       const createdAt = data.createdAt instanceof Timestamp 
                         ? data.createdAt.toDate().toISOString() 
-                        : (data.createdAt || new Date().toISOString()); // Fallback for existing data or if somehow not a Timestamp
+                        : (data.createdAt || new Date().toISOString());
       return { 
         id: storySnap.id, 
         ...data,
+        authorId: data.authorId || null, // Ensure authorId is included
         createdAt,
       } as Story;
     } else {
@@ -42,7 +40,6 @@ export default async function SingleStoryPage({ params }: { params: { id: string
   const story = await getStory(params.id);
 
   if (!story) {
-    // If story not found, use Next.js notFound utility to render a 404 page
     notFound();
   }
   const createdAtDate = new Date(story.createdAt);
@@ -69,7 +66,14 @@ export default async function SingleStoryPage({ params }: { params: { id: string
           )}
           <CardTitle className="text-4xl font-bold">{story.title}</CardTitle>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground mt-2">
-            <span className="flex items-center"><UserCircle className="w-4 h-4 mr-1.5" />By {story.author}</span>
+            <span className="flex items-center">
+              <UserCircle className="w-4 h-4 mr-1.5" />By{' '}
+              {story.authorId ? (
+                <Link href={`/profile/${story.authorId}`} className="hover:underline ml-1">{story.author}</Link>
+              ) : (
+                story.author
+              )}
+            </span>
             <span className="flex items-center"><CalendarDays className="w-4 h-4 mr-1.5" />{format(createdAtDate, "MMMM d, yyyy")}</span>
           </div>
         </CardHeader>

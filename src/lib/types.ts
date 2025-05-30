@@ -4,16 +4,16 @@ export interface Story {
   title: string;
   content: string;
   author: string;
-  authorId?: string;
+  authorId?: string; // UID of the author
   grade: string;
   subject: string;
   language: string;
   theme?: string;
-  imageUrl?: string | null; // Can be null if no image
+  imageUrl?: string | null;
   createdAt: string; // Should be ISO string or Firestore Timestamp compatible
   status?: 'Draft' | 'In Review' | 'Published';
   upvotes?: number;
-  likedBy?: string[]; // Array of user UIDs who liked the story
+  likedBy?: string[];
 }
 
 export interface ChatMessage {
@@ -21,21 +21,25 @@ export interface ChatMessage {
   sender: "user" | "ai";
   text: string;
   timestamp: number;
-  subject?: string; // Optional: to associate message with a subject context
+  subject?: string;
 }
 
 export interface UserProfile {
-  name: string;
-  avatarUrl?: string;
-  mood?: Mood;
-  following?: string[]; // Array of user IDs the current user is following
-  followersCount?: number; // How many users follow this user
-  uid?: string; // User's own ID
+  uid: string; // User's own ID
+  name: string; // First name
+  surname?: string;
+  displayName?: string; // Combined name for display
   email?: string;
+  avatarUrl?: string;
   school?: string;
   grade?: string;
-  surname?: string;
   createdAt?: any; // Firestore Timestamp
+  mood?: Mood;
+  // Social fields
+  following?: string[]; // Deprecated if using subcollections primarily for lists, but useful for quick checks. Kept for now.
+  followers?: string[]; // Deprecated if using subcollections primarily for lists. Kept for now.
+  followingCount?: number;
+  followersCount?: number;
 }
 
 export interface Mood {
