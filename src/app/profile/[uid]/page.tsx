@@ -257,9 +257,7 @@ export default function ProfilePage() {
       </Card>
 
       <div className="mt-8">
-        <h2 className="text-2xl font-semibold text-foreground mb-6"> 
-          Stories by {profile.displayName || profile.name}
-        </h2>
+        {/* Removed "Stories by [User's Name]" heading from here */}
         {stories.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {stories.map((story) => (
@@ -292,6 +290,6 @@ export default function ProfilePage() {
     </div>
   );
 }
-
     
 
+    
