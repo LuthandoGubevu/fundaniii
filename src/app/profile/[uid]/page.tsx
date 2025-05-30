@@ -5,7 +5,7 @@ import type { UserProfile, Story } from "@/lib/types";
 import { db, auth } from "@/lib/firebase";
 import type { User } from "firebase/auth";
 import { doc, getDoc, collection, query, where, getDocs, orderBy, Timestamp } from "firebase/firestore";
-import { notFound, useRouter } from 'next/navigation'; // useRouter for potential redirects
+import { useRouter, useParams } from 'next/navigation'; // Import useParams
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import StoryCard from "@/components/story/StoryCard";
 import FollowButton from "@/components/profile/FollowButton";
 import { Users, BookOpenCheck, Heart, ArrowLeft, Loader2, UserCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"; // Removed useTransition as it wasn't used
 import { useToast } from "@/hooks/use-toast";
 
 async function getUserProfile(uid: string): Promise<UserProfile | null> {
@@ -37,8 +37,6 @@ async function getUserProfile(uid: string): Promise<UserProfile | null> {
 
 async function getUserStories(uid: string): Promise<Story[]> {
   const storiesRef = collection(db, "stories");
-  // Removed status filter to show all stories by author on their profile for now
-  // Consider adding filter options for Draft/Published if needed
   const q = query(storiesRef, where("authorId", "==", uid), orderBy("createdAt", "desc"));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => {
@@ -51,7 +49,10 @@ async function getUserStories(uid: string): Promise<Story[]> {
 }
 
 
-export default function ProfilePage({ params }: { params: { uid: string } }) {
+export default function ProfilePage() { // Removed params from props as we'll use the hook
+  const clientParams = useParams();
+  const pageUid = clientParams.uid as string; // Get uid from hook
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,39 +69,35 @@ export default function ProfilePage({ params }: { params: { uid: string } }) {
 
   useEffect(() => {
     async function fetchData() {
-      if (!currentUser && params.uid) { 
-        // Check if user must be logged in to view ANY profile based on rules
-        // If your rules are `allow read: if request.auth != null;` for /users/{userId},
-        // then this fetch will fail if currentUser is null.
-        // We'll gate the fetch on currentUser being available.
+      if (!pageUid) { // Check if pageUid (from hook) is available
         setIsLoading(false);
         return;
       }
-      if (!params.uid) {
-        setIsLoading(false);
-        return;
-      }
+      // The check for currentUser is now primarily for UI display decisions,
+      // not for preventing the fetch if rules require auth.
+      // If rules deny access, Firestore will throw an error handled below.
 
       setIsLoading(true);
       try {
-        const userProfile = await getUserProfile(params.uid);
+        const userProfile = await getUserProfile(pageUid);
         if (!userProfile) {
           toast({ variant: "destructive", title: "Profile Not Found", description: "This user profile does not exist or you may not have permission to view it."});
-          // Consider redirecting to a 404 page or Explore page instead of Next's notFound() for client components
-          // router.push('/explore'); // Example redirect
-          setProfile(null); // Ensure profile is null if not found
+          setProfile(null); 
           setStories([]);
           setIsLoading(false);
+          // router.push('/explore'); // Optionally redirect
           return;
         }
         setProfile(userProfile);
-        const userStories = await getUserStories(params.uid);
+        const userStories = await getUserStories(pageUid);
         setStories(userStories);
       } catch (error: any) {
         console.error("Error fetching profile data:", error);
         let errorDesc = "Could not load profile. Please try again later.";
         if (error.code === "permission-denied" || (error.message && error.message.toLowerCase().includes("insufficient permissions"))) {
             errorDesc = "Failed to load profile due to Firestore permissions. Please ensure you are logged in if required by security rules, and that rules allow reading this profile.";
+        } else if (error.message && error.message.toLowerCase().includes("failed to fetch")) {
+             errorDesc = "Network error: Failed to fetch profile data. Please check your internet connection.";
         }
         toast({ variant: "destructive", title: "Profile Load Error", description: errorDesc, duration: 9000 });
         setProfile(null);
@@ -110,15 +107,14 @@ export default function ProfilePage({ params }: { params: { uid: string } }) {
       }
     }
     
-    // Fetch data only if currentUser state has been resolved (even if it's null, if rules allow public reads)
-    // OR if currentUser is truthy (user logged in, satisfying rules that require auth)
-    if (currentUser !== undefined && params.uid) { // Ensure auth state is resolved before fetching
+    // Fetch data if pageUid is available and auth state has been resolved.
+    if (pageUid && currentUser !== undefined) { 
         fetchData();
-    } else if (!params.uid) {
-        setIsLoading(false); // No UID, nothing to fetch
+    } else if (!pageUid) {
+        setIsLoading(false); // No UID from params, nothing to fetch
     }
 
-  }, [params.uid, currentUser, toast, router]);
+  }, [pageUid, currentUser, toast, router]); // Use pageUid in dependency array
 
   if (isLoading) {
     return (
@@ -128,7 +124,7 @@ export default function ProfilePage({ params }: { params: { uid: string } }) {
     );
   }
 
-  if (!currentUser && !isLoading && params.uid) { // User needs to be logged in to view profiles
+  if (!currentUser && !isLoading && pageUid) { 
     return (
       <div className="w-full max-w-md mx-auto p-4 md:p-6 lg:p-8 text-center">
         <Card className="shadow-xl bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80 p-8">
@@ -170,7 +166,6 @@ export default function ProfilePage({ params }: { params: { uid: string } }) {
     );
   }
   
-  // Ensure profile is not null before trying to access its properties
   if (!profile) { 
     return <div className="text-center py-10"><p>Loading profile or profile not available.</p></div>;
   }
@@ -216,7 +211,7 @@ export default function ProfilePage({ params }: { params: { uid: string } }) {
               <p className="text-sm text-muted-foreground">Followers</p>
             </div>
             <div className="col-span-2 md:col-span-1">
-              <Heart className="h-8 w-8 mx-auto text-primary mb-1" /> {/* Consider changing icon for 'Following' */}
+              <Heart className="h-8 w-8 mx-auto text-primary mb-1" />
               <p className="text-2xl font-bold text-foreground">{profile.followingCount || 0}</p>
               <p className="text-sm text-muted-foreground">Following</p>
             </div>
@@ -246,3 +241,4 @@ export default function ProfilePage({ params }: { params: { uid: string } }) {
     </div>
   );
 }
+
