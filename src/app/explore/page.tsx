@@ -8,7 +8,6 @@ import UserCard from "@/components/explore/UserCard";
 import { Compass, Users, Loader2 } from "lucide-react"; // Added Loader2
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
-import type { Metadata } from "next";
 
 async function getAllUsers(): Promise<UserProfile[]> {
   try {
@@ -36,11 +35,6 @@ async function getAllUsers(): Promise<UserProfile[]> {
     return []; // Return empty array on error
   }
 }
-
-export const metadata: Metadata = {
-  title: "Explore Users | Fundanii Ai",
-  description: "Discover and connect with other users on Fundanii Ai.",
-};
 
 export default function ExplorePage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
