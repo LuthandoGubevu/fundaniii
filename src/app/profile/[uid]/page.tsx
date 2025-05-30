@@ -15,6 +15,7 @@ import FollowButton from "@/components/profile/FollowButton";
 import { Users, BookOpenCheck, Heart, ArrowLeft, Loader2, UserCircle, Award } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { onAuthStateChanged } from "firebase/auth";
 
 async function getUserProfile(uid: string): Promise<UserProfile | null> {
   const userRef = doc(db, "users", uid);
@@ -61,11 +62,15 @@ export default function ProfilePage() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
+      if (!user && pageUid) { // If trying to view a profile but not logged in
+         // No automatic redirect, just set loading to false and let UI handle "please sign in"
+         setIsLoading(false);
+      }
     });
     return () => unsubscribe();
-  }, []);
+  }, [pageUid]);
 
   useEffect(() => {
     async function fetchData() {
@@ -74,9 +79,11 @@ export default function ProfilePage() {
         return;
       }
       
-      // If rules require auth to view profiles, we should only proceed if currentUser is known.
-      // However, if profiles are public, this check might be less strict.
-      // For now, we fetch if pageUid is present. Error handling will catch permission issues.
+      // Only fetch if a user is logged in, as per security rules allow read: if request.auth != null;
+      if (!currentUser) {
+        setIsLoading(false); // Stop loading if no current user to attempt the fetch
+        return;
+      }
 
       setIsLoading(true);
       try {
@@ -95,7 +102,7 @@ export default function ProfilePage() {
         console.error("Error fetching profile data:", error);
         let errorDesc = "Could not load profile. Please try again later.";
         if (error.code === "permission-denied" || (error.message && error.message.toLowerCase().includes("insufficient permissions"))) {
-          errorDesc = "Failed to load profile due to Firestore permissions. Ensure you are logged in if required, and check Firestore Security Rules.";
+          errorDesc = "Failed to load profile due to Firestore permissions. Ensure you are logged in and check Firestore Security Rules allow reading user profiles.";
         } else if (error.message && error.message.toLowerCase().includes("failed to fetch")) {
           errorDesc = "Network error: Failed to fetch profile data. Please check your internet connection.";
         }
@@ -106,15 +113,16 @@ export default function ProfilePage() {
         setIsLoading(false);
       }
     }
-
-    // Fetch data if pageUid is available. Auth state check is mainly for UI decisions now.
-    if (pageUid) {
-      fetchData();
-    } else {
-      setIsLoading(false);
+    
+    if (pageUid && currentUser !== undefined) { // Ensure auth state is resolved before fetching
+        if (currentUser) { // User is logged in, proceed to fetch
+            fetchData();
+        } else { // User is not logged in
+            setIsLoading(false); // Don't show loader if we know user is not logged in
+        }
     }
 
-  }, [pageUid, toast]);
+  }, [pageUid, currentUser, toast]);
 
   if (isLoading) {
     return (
@@ -124,7 +132,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (!currentUser && !isLoading && pageUid) {
+  if (!currentUser && !isLoading && pageUid) { // User is not logged in and loading is complete
     return (
       <div className="w-full max-w-md mx-auto p-4 md:p-6 lg:p-8 text-center">
         <Card className="shadow-xl bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80 p-8">
@@ -142,20 +150,20 @@ export default function ProfilePage() {
       </div>
     );
   }
-
-  if (!profile && !isLoading) {
+  
+  if (!profile && !isLoading) { // Profile doesn't exist after attempting to fetch
     return (
       <div className="w-full max-w-4xl mx-auto p-4 md:p-6 lg:p-8 text-center">
-        <Card className="shadow-xl bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80 p-8">
+        <Card className="shadow-xl bg-gradient-to-br from-destructive/80 to-destructive/60 text-destructive-foreground border-destructive/50 p-8">
           <CardHeader>
-            <UserCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
-            <CardTitle className="text-2xl font-bold text-destructive">Profile Not Found</CardTitle>
+            <UserCircle className="h-16 w-16 mx-auto mb-4" />
+            <CardTitle className="text-2xl font-bold">Profile Not Found</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground text-lg mb-6">
+            <p className="text-lg mb-6">
               The profile you are looking for does not exist or could not be loaded.
             </p>
-            <Button asChild variant="outline" className="bg-background/50 hover:bg-accent/10">
+            <Button asChild variant="outline" className="bg-background/50 hover:bg-accent/10 text-foreground">
               <Link href="/explore">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Explore
               </Link>
@@ -184,8 +192,7 @@ export default function ProfilePage() {
         </Link>
       </Button>
 
-      {/* Hero Profile Card */}
-      <Card className="shadow-xl bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80 text-card-foreground overflow-hidden">
+      <Card className="shadow-xl bg-gradient-to-br from-[#2D9CDB] to-[#70C1B3] text-primary-foreground border-primary/50 overflow-hidden">
         <CardHeader className="items-center text-center p-6 md:p-8">
           <div className="relative w-32 h-32 md:w-40 md:h-40 mb-4">
             {profile.avatarUrl ? (
@@ -193,59 +200,55 @@ export default function ProfilePage() {
                 src={profile.avatarUrl}
                 alt={profile.displayName || profile.name || "User Avatar"}
                 fill
-                className="rounded-full border-4 border-primary shadow-lg object-cover"
+                className="rounded-full border-4 border-white shadow-lg object-cover"
                 data-ai-hint="user avatar large"
               />
             ) : (
-              <div className="w-full h-full rounded-full bg-muted flex items-center justify-center border-4 border-primary shadow-lg">
-                <span className="text-4xl md:text-5xl font-semibold text-muted-foreground">{avatarText}</span>
+              <div className="w-full h-full rounded-full bg-primary-foreground/20 flex items-center justify-center border-4 border-white shadow-lg">
+                <span className="text-4xl md:text-5xl font-semibold text-primary-foreground">{avatarText}</span>
               </div>
             )}
           </div>
-          <CardTitle className="text-3xl md:text-4xl font-bold text-foreground">
+          <CardTitle className="text-3xl md:text-4xl font-bold text-primary-foreground">
             {profile.displayName || `${profile.name} ${profile.surname || ''}`.trim()}
           </CardTitle>
           {(profile.grade || profile.school) && (
-            <CardDescription className="text-lg text-muted-foreground mt-1">
+            <CardDescription className="text-lg text-primary-foreground/90 mt-1">
               {profile.grade && <span>{profile.grade}</span>}
               {profile.grade && profile.school && <span> @ </span>}
               {profile.school && <span>{profile.school}</span>}
             </CardDescription>
           )}
-           {/* Placeholder for Role/Badge Strip */}
-           <div className="mt-3 text-sm text-primary font-medium">
-             {/* Example: <Badge variant="secondary">Young Creator</Badge> */}
+           <div className="mt-3 text-sm text-yellow-300 font-medium">
              Role / Badges Coming Soon! 
            </div>
         </CardHeader>
 
-        {/* Quick Stats Section */}
-        <CardContent className="border-t border-b border-border/30 p-4 md:p-6">
+        <CardContent className="border-t border-b border-primary-foreground/30 p-4 md:p-6">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
             <div>
-              <BookOpenCheck className="h-7 w-7 mx-auto text-primary mb-1" />
-              <p className="text-xl font-bold text-foreground">{stories.length}</p>
-              <p className="text-xs text-muted-foreground">Stories Shared</p>
+              <BookOpenCheck className="h-7 w-7 mx-auto text-primary-foreground mb-1" />
+              <p className="text-xl font-bold text-primary-foreground">{stories.length}</p>
+              <p className="text-xs text-primary-foreground/80">Stories Shared</p>
             </div>
             <div>
-              <Users className="h-7 w-7 mx-auto text-primary mb-1" />
-              <p className="text-xl font-bold text-foreground">{profile.followersCount || 0}</p>
-              <p className="text-xs text-muted-foreground">Followers</p>
+              <Users className="h-7 w-7 mx-auto text-primary-foreground mb-1" />
+              <p className="text-xl font-bold text-primary-foreground">{profile.followersCount || 0}</p>
+              <p className="text-xs text-primary-foreground/80">Followers</p>
             </div>
             <div>
-              <Heart className="h-7 w-7 mx-auto text-primary mb-1" />
-              <p className="text-xl font-bold text-foreground">{profile.followingCount || 0}</p>
-              <p className="text-xs text-muted-foreground">Following</p>
+              <Heart className="h-7 w-7 mx-auto text-primary-foreground mb-1" />
+              <p className="text-xl font-bold text-primary-foreground">{profile.followingCount || 0}</p>
+              <p className="text-xs text-primary-foreground/80">Following</p>
             </div>
              <div>
-              <Award className="h-7 w-7 mx-auto text-primary mb-1" />
-              <p className="text-xl font-bold text-foreground">-</p>
-              <p className="text-xs text-muted-foreground">Awards (Soon)</p>
+              <Award className="h-7 w-7 mx-auto text-primary-foreground mb-1" />
+              <p className="text-xl font-bold text-primary-foreground">-</p>
+              <p className="text-xs text-primary-foreground/80">Awards (Soon)</p>
             </div>
           </div>
         </CardContent>
         
-        {/* Follow Button */}
         <CardContent className="p-4 md:p-6 text-center">
           {currentUser && currentUser.uid !== profile.uid && (
             <FollowButton targetUserId={profile.uid} />
@@ -253,9 +256,8 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Stories Section */}
       <div className="mt-8">
-        <h2 className="text-2xl font-semibold text-primary-foreground mb-6">
+        <h2 className="text-2xl font-semibold text-foreground mb-6"> 
           Stories by {profile.displayName || profile.name}
         </h2>
         {stories.length > 0 ? (
@@ -265,7 +267,7 @@ export default function ProfilePage() {
             ))}
           </div>
         ) : (
-          <Card className="text-center py-12 shadow-md bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
+          <Card className="text-center py-12 shadow-md bg-gradient-to-br from-[#2D9CDB]/70 to-[#70C1B3]/70 text-primary-foreground border-primary/30">
             <CardContent>
                <Image 
                 src="https://placehold.co/150x100.png?text=No+Stories" 
@@ -275,11 +277,11 @@ export default function ProfilePage() {
                 className="mx-auto mb-4 rounded-md"
                 data-ai-hint="child reading book"
               />
-              <p className="text-lg text-muted-foreground">
+              <p className="text-lg text-primary-foreground/90">
                 {profile.displayName || profile.name} hasn't shared any stories yet.
               </p>
                {currentUser && currentUser.uid === profile.uid && (
-                <Button asChild className="mt-4">
+                <Button asChild className="mt-4 bg-primary-foreground text-primary hover:bg-primary-foreground/90">
                     <Link href="/create-story">Start a Story</Link>
                 </Button>
                )}
@@ -292,3 +294,4 @@ export default function ProfilePage() {
 }
 
     
+
