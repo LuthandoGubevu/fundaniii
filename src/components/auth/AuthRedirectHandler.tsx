@@ -18,6 +18,7 @@ export default function AuthRedirectHandler() {
         setIsAuthenticated(true);
       } else {
         setIsAuthenticated(false);
+        // Changed from '/auth/signin' to '/auth/signup'
         router.replace('/auth/signup');
       }
       setIsLoading(false);
