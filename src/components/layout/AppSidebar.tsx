@@ -40,7 +40,7 @@ export function AppSidebar() {
         title: "Signed Out",
         description: "You have been successfully signed out.",
       });
-      router.push("/auth/signup"); // Changed from /auth/signin to /auth/signup
+      router.push("/landing"); // Changed from /auth/signup
     } catch (error) {
       console.error("Sign out error:", error);
       toast({
