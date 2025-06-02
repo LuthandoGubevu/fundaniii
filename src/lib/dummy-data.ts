@@ -131,9 +131,15 @@ export const storyGrades = ["Grade R", "Grade 1", "Grade 2", "Grade 3", "Grade 4
 export const storySubjects = ["Science", "Math", "English", "Life Orientation", "Languages", "Social Studies", "Arts & Culture", "Technology", "Natural Sciences", "Economic Management Sciences"];
 
 export const dummyUserProfile: UserProfile = {
-  name: "Lerato", 
-  avatarUrl: "https://placehold.co/100x100.png?text=User", 
+  uid: "dummy-user-id", // Added a UID for completeness
+  name: "Learner", // Changed from "Lerato"
+  avatarUrl: "https://placehold.co/100x100.png?text=L", // Changed text from "User"
   mood: { emoji: "😊", label: "Happy" },
+  displayName: "Creative Learner", // More generic display name
+  school: "Wonder School",
+  grade: "Grade 4",
+  followersCount: 0,
+  followingCount: 0,
 };
 
 export const dummyMoods: Mood[] = [
