@@ -17,7 +17,7 @@ export default function LandingLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${GeistSans.variable} antialiased font-sans bg-white`}
+        className={`${GeistSans.variable} antialiased font-sans`} 
       >
         {/* Animated Background Elements Container - Replicated from main layout */}
         <div
