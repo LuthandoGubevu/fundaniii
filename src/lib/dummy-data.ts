@@ -1,5 +1,5 @@
 
-import type { Story, UserProfile, Mood, DashboardStoryItem, Achievement, DailyPrompt, FeaturedStory, SubjectItem } from "./types";
+import type { Story, DashboardStoryItem, Achievement, DailyPrompt, FeaturedStory, SubjectItem } from "./types";
 import { BookOpenCheck, Edit3, CheckCircle, Award, Star, ThumbsUp, MessageCircle, Pencil, Lightbulb, Zap, BookHeart, Users, Languages, Image as ImageIconLucide, Wand2, Rocket, Palette, Globe, Brain, BookText, Sigma, FlaskConical, HeartHandshake, Sparkles, BookOpen } from "lucide-react";
 
 export const dummyStories: Story[] = [
@@ -130,26 +130,6 @@ export const storyLanguages = ["English", "isiXhosa", "Zulu", "Swahili", "French
 export const storyGrades = ["Grade R", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
 export const storySubjects = ["Science", "Math", "English", "Life Orientation", "Languages", "Social Studies", "Arts & Culture", "Technology", "Natural Sciences", "Economic Management Sciences"];
 
-export const dummyUserProfile: UserProfile = {
-  uid: "dummy-user-id", // Added a UID for completeness
-  name: "Learner", // Changed from "Lerato"
-  avatarUrl: "https://placehold.co/100x100.png?text=L", // Changed text from "User"
-  mood: { emoji: "😊", label: "Happy" },
-  displayName: "Creative Learner", // More generic display name
-  school: "Wonder School",
-  grade: "Grade 4",
-  followersCount: 0,
-  followingCount: 0,
-};
-
-export const dummyMoods: Mood[] = [
-  { emoji: "😊", label: "Happy" },
-  { emoji: "🤩", label: "Excited" },
-  { emoji: "🤔", label: "Curious" },
-  { emoji: "💡", label: "Inspired" },
-  { emoji: "🥳", label: "Creative" },
-  { emoji: "🧑‍🎓", label: "Studious" },
-];
 
 export const dummyStoryProgress: DashboardStoryItem[] = [
   { id: "story-draft-1", title: "The Flying Rhino", thumbnailUrl: "https://placehold.co/150x100.png?text=Rhino", status: "Draft" },
@@ -205,4 +185,3 @@ export const studySubjects: SubjectItem[] = [
   { id: "readwrite", name: "Reading & Writing", icon: BookOpen },
   { id: "lifeori", name: "Life Orientation", icon: HeartHandshake },
 ];
-

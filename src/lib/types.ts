@@ -34,17 +34,11 @@ export interface UserProfile {
   school?: string;
   grade?: string;
   createdAt?: any; // Firestore Timestamp
-  mood?: Mood;
   // Social fields
   following?: string[]; // Deprecated if using subcollections primarily for lists, but useful for quick checks. Kept for now.
   followers?: string[]; // Deprecated if using subcollections primarily for lists. Kept for now.
   followingCount?: number;
   followersCount?: number;
-}
-
-export interface Mood {
-  emoji: string;
-  label: string;
 }
 
 export type StoryStatus = 'Draft' | 'In Review' | 'Shared';
