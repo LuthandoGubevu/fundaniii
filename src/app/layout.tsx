@@ -1,5 +1,5 @@
 
-"use client"; // Required for usePathname
+"use client"; 
 
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
@@ -11,10 +11,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
-// Static metadata for the RootLayout (can be overridden by page-specific metadata)
-// Note: To make this truly static and available for SSR, if this component becomes fully client-side
-// due to extensive use of client hooks, metadata might need to be in a parent server component or page.tsx.
-// However, for now, Next.js can often still pick this up.
+
 const rootMetadata = {
   title: "Fundanii Ai",
   description: "AI-Powered Digital Storytelling & Learning Platform for African Learners",
@@ -29,14 +26,11 @@ export default function RootLayout({
   const pathname = usePathname();
   const isLandingPage = pathname === '/landing';
 
-  // If you need to set dynamic metadata based on isLandingPage, it's more complex
-  // and often involves separate layout files for route groups or logic in page.tsx.
-  // For simplicity, we'll use the static rootMetadata or let specific pages override.
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Populate head with metadata - Next.js handles this if exported from page/layout */}
+        
         <title>{isLandingPage ? "Fundees - Turn Imagination into Stories!" : rootMetadata.title}</title>
         <meta name="description" content={isLandingPage ? "A fun, safe space where young learners create, share, and explore stories with the help of AI." : rootMetadata.description} />
       </head>
@@ -44,7 +38,7 @@ export default function RootLayout({
         className={`${GeistSans.variable} antialiased font-sans`}
       >
         {!isLandingPage && (
-          /* Common Animated Background for the main app (not landing page) */
+          
           <div
             className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none"
             style={{ background: 'linear-gradient(to bottom, #87CEEB 0%, #a1dff7 100%)' }}
@@ -66,13 +60,10 @@ export default function RootLayout({
 
         {isLandingPage ? (
           <>
-            {/* For the landing page, children are rendered directly.
-                LandingLayout provides its own specific animated background.
-            */}
             {children}
           </>
         ) : (
-          /* Main App Structure with Sidebar (for non-landing pages) */
+          
           <SidebarProvider defaultOpen={true}>
             <div className="relative flex min-h-screen"> 
               <Sidebar
@@ -89,8 +80,8 @@ export default function RootLayout({
                       <Image
                         src="/logo.png"
                         alt="Fundanii Ai Logo"
-                        width={32}
-                        height={32}
+                        width={600}
+                        height={600}
                         className="text-primary"
                       />
                    </Link>
@@ -103,7 +94,7 @@ export default function RootLayout({
             </div>
           </SidebarProvider>
         )}
-        <Toaster /> {/* Single global Toaster */}
+        <Toaster /> 
       </body>
     </html>
   );

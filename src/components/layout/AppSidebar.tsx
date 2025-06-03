@@ -40,7 +40,7 @@ export function AppSidebar() {
         title: "Signed Out",
         description: "You have been successfully signed out.",
       });
-      router.push("/landing"); // Changed from /auth/signup
+      router.push("/landing"); 
     } catch (error) {
       console.error("Sign out error:", error);
       toast({
@@ -59,8 +59,8 @@ export function AppSidebar() {
                 <Image 
                   src="/logo.png" 
                   alt="Fundanii Ai Logo" 
-                  width={32} 
-                  height={32} 
+                  width={600} 
+                  height={600} 
                   className="text-primary"
                 />
             </Link>
