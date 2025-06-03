@@ -59,8 +59,8 @@ export function AppSidebar() {
                 <Image 
                   src="/logo.png" 
                   alt="Fundanii Ai Logo" 
-                  width={600} 
-                  height={600} 
+                  width={32} 
+                  height={32} 
                   className="text-primary"
                 />
             </Link>
