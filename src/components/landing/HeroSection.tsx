@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image"; // Added Image import
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
@@ -10,6 +11,18 @@ export default function HeroSection() {
     <section className="relative py-20 md:py-32 lg:py-40 text-center overflow-hidden min-h-[calc(80vh)] flex flex-col items-center justify-center">
       {/* Content */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 z-10">
+        {/* Logo Added Here */}
+        <div className="mb-8 flex justify-center">
+          <Image
+            src="/Fundees.png" // Assuming Fundees.png is in the /public directory
+            alt="Fundees Logo"
+            width={250} // Adjust width as needed
+            height={100} // Adjust height as needed, will maintain aspect ratio
+            priority // Load the logo with high priority
+            data-ai-hint="company logo"
+          />
+        </div>
+
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-gray-800">
           Turn Imagination into <span className="text-[#29ABE2]">Stories</span> with{" "}
           <span className="text-yellow-500">Fundees</span>!
