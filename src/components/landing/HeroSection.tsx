@@ -23,7 +23,7 @@ export default function HeroSection() {
           />
         </div>
 
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-gray-800">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-gray-800"> {/* Reduced text sizes here */}
           Turn Imagination into <span className="text-[#29ABE2]">Stories</span> with{" "}
           <span className="text-yellow-500">Fundees</span>!
         </h1>
