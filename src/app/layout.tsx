@@ -25,6 +25,7 @@ export default function RootLayout({
 }>) {
   const pathname = usePathname();
   const isLandingPage = pathname === '/landing';
+  const isAuthPage = pathname.startsWith('/auth');
 
 
   return (
@@ -37,7 +38,8 @@ export default function RootLayout({
       <body
         className={`${GeistSans.variable} antialiased font-sans`}
       >
-        {!isLandingPage && (
+        {/* Conditionally render animated background for non-landing AND non-auth pages */}
+        {!isLandingPage && !isAuthPage && (
           
           <div
             className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none"
@@ -58,12 +60,14 @@ export default function RootLayout({
           </div>
         )}
 
-        {isLandingPage ? (
+        {isLandingPage || isAuthPage ? (
+          // For landing or auth pages, just render children directly.
+          // Their respective layouts (LandingLayout, AuthLayout) will handle their specific structure.
           <>
             {children}
           </>
         ) : (
-          
+          // For all other authenticated app pages, render the full sidebar structure
           <SidebarProvider defaultOpen={true}>
             <div className="relative flex min-h-screen"> 
               <Sidebar
@@ -99,3 +103,4 @@ export default function RootLayout({
     </html>
   );
 }
+
