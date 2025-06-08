@@ -18,10 +18,9 @@ import { translateStory, TranslateStoryInput, TranslateStoryOutput } from "@/ai/
 import { generateStoryImage, GenerateStoryImageInput, GenerateStoryImageOutput } from "@/ai/flows/generate-story-image-flow";
 import { storyThemes, storyLanguages, storyGrades, storySubjects } from "@/lib/dummy-data";
 import type { Story } from "@/lib/types";
-import { auth, db } from "@/lib/firebase"; 
+import { auth, db, storage } from "@/lib/firebase"; 
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"; 
-// Temporarily removed Firebase Storage imports as per user request
-// import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
+import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 import { Loader2, Wand2, LanguagesIcon, Image as ImageIconLucide, Share2, BookPlus } from "lucide-react";
 import Image from "next/image";
 import { useSearchParams } from 'next/navigation';
@@ -82,9 +81,8 @@ export default function CreateStoryClientPage() {
     defaultValues: { title: "", grade: "", subject: "", language: "" },
   });
 
-  // Auto-get assistance if prompt is present in URL
   useEffect(() => {
-    if (initialPrompt && !aiSuggestions) {
+    if (initialPrompt && !aiSuggestions && !storyForm.formState.isSubmitted) {
       storyForm.setValue("storyText", initialPrompt);
       onGetAssistance({ storyText: initialPrompt, theme: storyForm.getValues("theme") });
     }
@@ -182,6 +180,37 @@ export default function CreateStoryClientPage() {
     });
   };
 
+  async function uploadImageToStorage(dataUri: string, userId: string): Promise<string | null> {
+    if (!dataUri.startsWith('data:image')) {
+      toast({ variant: "destructive", title: "Invalid Image Data", description: "Cannot upload image, invalid format." });
+      return null;
+    }
+    try {
+      const uniqueImageName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.png`;
+      const imagePath = `stories/${userId}/${uniqueImageName}`;
+      const imageStorageRef = storageRef(storage, imagePath);
+
+      // 'data_url' tells Firebase to expect a base64 string.
+      const uploadTask = await uploadString(imageStorageRef, dataUri, 'data_url');
+      const downloadUrl = await getDownloadURL(uploadTask.ref);
+      return downloadUrl;
+    } catch (error) {
+      console.error("Error uploading image to Firebase Storage:", error);
+      let errorMessage = "Could not upload story image.";
+      if (error instanceof Error && (error as any).code) {
+        const firebaseErrorCode = (error as any).code;
+        if (firebaseErrorCode === 'storage/unauthorized') {
+          errorMessage = "Image upload failed: Permission denied. Please check Firebase Storage rules.";
+        } else if (firebaseErrorCode === 'storage/canceled') {
+          errorMessage = "Image upload was canceled.";
+        }
+      }
+      toast({ variant: "destructive", title: "Image Upload Failed", description: errorMessage, duration: 7000 });
+      return null;
+    }
+  }
+
+
   async function onShareToLibrary(values: z.infer<typeof storyDetailsSchema>) {
     const currentUser = auth.currentUser;
     if (!currentUser) {
@@ -197,24 +226,28 @@ export default function CreateStoryClientPage() {
         return;
     }
     
-    let finalImageUrlForFirestore: string | null = null; 
-
-    // Bypassing Firebase Storage upload as per user request
-    if (firstPageImageUrl && firstPageImageUrl.startsWith('data:image')) {
-      // For now, we are not uploading. ImageUrl in Firestore will be null.
-      // This is where you'd normally put the Firebase Storage upload logic.
-      // For testing, we'll keep finalImageUrlForFirestore as null or the placeholder if no real image.
-      // finalImageUrlForFirestore = firstPageImageUrl; // If storing Data URI directly (NOT RECOMMENDED for prod)
-      console.log("Bypassing actual image upload to Firebase Storage. Storing placeholder or null.");
-      // If you want to use the placeholder that was shown, you could set it here,
-      // but it's better to store null if a real upload didn't happen.
-      // finalImageUrlForFirestore = "https://placehold.co/600x400.png?text=Story+Image";
-      // For now, we explicitly set it to null because we are "bypassing"
-      finalImageUrlForFirestore = null; 
-    }
-
-
     startSharingTransition(async () => {
+      let finalImageUrlForFirestore: string | null = null; 
+
+      if (firstPageImageUrl && firstPageImageUrl.startsWith('data:image')) {
+        toast({ title: "Uploading Image...", description: "Please wait while your illustration is uploaded." });
+        finalImageUrlForFirestore = await uploadImageToStorage(firstPageImageUrl, currentUser.uid);
+        if (!finalImageUrlForFirestore) {
+          // Error toast for upload failure is handled in uploadImageToStorage
+          // Optionally, you could decide to not proceed with saving the story if image upload fails.
+          // For now, it proceeds but imageUrl will be null.
+        } else {
+          toast({ title: "Image Uploaded!", description: "Illustration successfully saved to storage." });
+        }
+      } else if (firstPageImageUrl) {
+         // If firstPageImageUrl exists but is not a data URI, it might be an existing URL (e.g. placeholder)
+         // For this flow, we primarily expect AI-generated data URIs. If it's something else, we might ignore it or use it directly.
+         // Given the current logic, this branch is less likely if AI image gen is the source.
+         console.log("Using existing firstPageImageUrl (not a data URI):", firstPageImageUrl);
+         finalImageUrlForFirestore = firstPageImageUrl;
+      }
+
+
       try {
         const authorName = currentUser.displayName || currentUser.email?.split('@')[0] || "Anonymous Learner";
         
@@ -227,10 +260,10 @@ export default function CreateStoryClientPage() {
           subject: values.subject,
           language: values.language,
           theme: theme || "General",
-          imageUrl: finalImageUrlForFirestore, 
+          imageUrl: finalImageUrlForFirestore, // This will be the Firebase Storage URL or null
           createdAt: serverTimestamp(),
           upvotes: 0,
-          likedBy: [], // Initialize likedBy array
+          likedBy: [], 
         };
 
         await addDoc(collection(db, "stories"), storyToSave);
@@ -248,8 +281,8 @@ export default function CreateStoryClientPage() {
         setTranslatedStory(null);
 
       } catch (error: any) {
-        console.error("Error sharing story:", error);
-        let errorMessage = "An unknown error occurred while sharing.";
+        console.error("Error sharing story to Firestore:", error);
+        let errorMessage = "An unknown error occurred while sharing your story to the library.";
         if (error.code === "permission-denied" || (error.message && error.message.toLowerCase().includes("missing or insufficient permissions"))) {
           errorMessage = "Sharing failed due to Firestore permissions. Please check your Firestore Security Rules to allow creating documents in the 'stories' collection, ensuring 'authorId' matches your UID.";
         } else if (error.message) {
@@ -410,7 +443,8 @@ export default function CreateStoryClientPage() {
           </Card>
       )}
 
-      {firstPageImageUrl && ( 
+      {/* Show this section only if an image has been generated OR if a story text exists (even without image) */}
+      {(aiSuggestions || firstPageImageUrl) && ( 
         <Card className="shadow-lg bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
           <CardHeader>
             <CardTitle className="text-2xl font-bold flex items-center">
@@ -422,29 +456,31 @@ export default function CreateStoryClientPage() {
             <div className="space-y-4">
               <div>
                 <h4 className="font-semibold text-md mb-1">Page 1 Preview:</h4>
-                <div className="aspect-video w-full bg-muted/30 rounded-md flex items-center justify-center border border-foreground/30 overflow-hidden mb-2">
-                  {firstPageImageUrl.startsWith('data:image') ? (
-                     <Image
-                        src={firstPageImageUrl} 
-                        alt="Preview of generated story illustration"
-                        width={600} 
-                        height={338} 
-                        className="object-contain w-full h-full"
-                        data-ai-hint="story preview child"
-                      />
-                  ) : (
-                     <Image
-                        src={firstPageImageUrl} 
-                        alt="Story illustration placeholder"
-                        width={600}
-                        height={338}
-                        className="object-contain w-full h-full"
-                        data-ai-hint="story placeholder child"
-                      />
-                  )}
-                </div>
+                {firstPageImageUrl && (
+                  <div className="aspect-video w-full bg-muted/30 rounded-md flex items-center justify-center border border-foreground/30 overflow-hidden mb-2">
+                    {firstPageImageUrl.startsWith('data:image') ? (
+                       <Image
+                          src={firstPageImageUrl} 
+                          alt="Preview of generated story illustration"
+                          width={600} 
+                          height={338} 
+                          className="object-contain w-full h-full"
+                          data-ai-hint="story preview child"
+                        />
+                    ) : (
+                       <Image
+                          src={firstPageImageUrl} 
+                          alt="Story illustration placeholder"
+                          width={600}
+                          height={338}
+                          className="object-contain w-full h-full"
+                          data-ai-hint="story placeholder child"
+                        />
+                    )}
+                  </div>
+                )}
                 <p className="text-sm text-muted-foreground bg-background/50 p-3 rounded-md whitespace-pre-wrap">
-                  {pageContentForm.getValues("firstPageText") || "No text entered for this page."}
+                  {pageContentForm.getValues("firstPageText") || "No text entered for this page. Please go back and add content."}
                 </p>
               </div>
             </div>
@@ -577,3 +613,6 @@ export default function CreateStoryClientPage() {
     </div>
   );
 }
+
+
+    
