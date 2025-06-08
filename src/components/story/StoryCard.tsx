@@ -126,7 +126,7 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
               alt={story.title || "Story cover image"}
               width={300}
               height={200}
-              className="rounded-t-lg object-cover w-full h-48"
+              className="rounded-t-lg object-cover w-full"
               data-ai-hint="story illustration"
             />
           </a>
@@ -191,3 +191,4 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
     </Card>
   );
 }
+
