@@ -119,20 +119,18 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
   return (
     <Card className="flex flex-col h-full shadow-lg hover:shadow-xl transition-shadow duration-300 bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
       <CardHeader>
-        {story.imageUrl && (
-           <Link href={`/story-library/${story.id}`} legacyBehavior>
-             <a>
-                <Image
-                  src={story.imageUrl}
-                  alt={story.title}
-                  width={300}
-                  height={200}
-                  className="rounded-t-lg object-cover w-full h-48"
-                  data-ai-hint="story illustration"
-                />
-              </a>
-           </Link>
-        )}
+        <Link href={`/story-library/${story.id}`} legacyBehavior>
+          <a>
+            <Image
+              src={story.imageUrl || "https://placehold.co/300x200.png"}
+              alt={story.title || "Story cover image"}
+              width={300}
+              height={200}
+              className="rounded-t-lg object-cover w-full h-48"
+              data-ai-hint="story illustration"
+            />
+          </a>
+        </Link>
         <CardTitle className="mt-4 text-xl font-semibold">
             <Link href={`/story-library/${story.id}`} className="hover:underline">{story.title}</Link>
         </CardTitle>
@@ -193,4 +191,3 @@ export default function StoryCard({ story, onLikeUpdated }: StoryCardProps) {
     </Card>
   );
 }
-

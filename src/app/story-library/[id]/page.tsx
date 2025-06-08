@@ -54,16 +54,14 @@ export default async function SingleStoryPage({ params }: { params: { id: string
       </Button>
       <Card className="shadow-xl bg-card/80 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
         <CardHeader>
-          {story.imageUrl && (
-            <Image 
-              src={story.imageUrl} 
-              alt={story.title} 
-              width={600} 
-              height={400} 
-              className="rounded-lg object-cover w-full h-auto max-h-[400px] mb-4"
-              data-ai-hint="story detail illustration"
-            />
-          )}
+          <Image 
+            src={story.imageUrl || "https://placehold.co/600x400.png"} 
+            alt={story.title || "Story image"} 
+            width={600} 
+            height={400} 
+            className="rounded-lg object-cover w-full h-auto max-h-[400px] mb-4"
+            data-ai-hint="story detail illustration"
+          />
           <CardTitle className="text-4xl font-bold">{story.title}</CardTitle>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground mt-2">
             <span className="flex items-center">
