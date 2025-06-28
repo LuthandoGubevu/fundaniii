@@ -1,15 +1,19 @@
 
+'use client';
+
+import { useState, useEffect } from "react";
 import type { Story } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, UserCircle, CalendarDays, Tag } from "lucide-react";
+import { ArrowLeft, UserCircle, CalendarDays, Tag, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { format } from 'date-fns';
 import { db } from "@/lib/firebase";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
-import { notFound } from 'next/navigation';
+import { useParams, notFound, useRouter } from 'next/navigation';
+import { useToast } from "@/hooks/use-toast";
 
 async function getStory(id: string): Promise<Story | undefined> {
   try {
@@ -32,16 +36,76 @@ async function getStory(id: string): Promise<Story | undefined> {
     }
   } catch (error) {
     console.error("Error fetching story from Firestore:", error);
-    return undefined;
+    // Re-throw to be caught in useEffect
+    throw error;
   }
 }
 
-export default async function SingleStoryPage({ params }: { params: { id: string } }) {
-  const story = await getStory(params.id);
+export default function SingleStoryPage() {
+  const params = useParams();
+  const router = useRouter();
+  const { toast } = useToast();
+  const id = params.id as string;
+  
+  const [story, setStory] = useState<Story | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+        document.title = "Loading Story... | Fundanii Ai";
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!id) {
+        setIsLoading(false);
+        return;
+    };
+
+    async function fetchStory() {
+      setIsLoading(true);
+      try {
+        const fetchedStory = await getStory(id);
+        if (fetchedStory) {
+          setStory(fetchedStory);
+          if (typeof document !== 'undefined') {
+             document.title = `${fetchedStory.title} | Fundanii Ai`;
+          }
+        } else {
+          notFound(); // This will render the not-found component
+        }
+      } catch (error: any) {
+        console.error("Failed to fetch story:", error);
+        toast({
+            variant: "destructive",
+            title: "Error loading story",
+            description: "There was a problem fetching the story. Please try again later."
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchStory();
+  }, [id, toast, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!story) {
-    notFound();
+    // This case is handled by notFound(), but as a fallback.
+    return (
+        <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+            <p>Story not found.</p>
+        </div>
+    );
   }
+  
   const createdAtDate = new Date(story.createdAt);
 
   return (
@@ -89,17 +153,4 @@ export default async function SingleStoryPage({ params }: { params: { id: string
       </Card>
     </div>
   );
-}
-
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const story = await getStory(params.id);
-  if (!story) {
-    return {
-      title: "Story Not Found",
-    };
-  }
-  return {
-    title: `${story.title} | Fundanii Ai`,
-    description: story.content.substring(0, 160),
-  };
 }
